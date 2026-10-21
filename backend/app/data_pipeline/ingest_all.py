@@ -29,7 +29,7 @@ from app.models import (
     MentorOffering, AuditLog, utcnow
 )
 from app.data_pipeline.data_register import (
-    build_data_usage_register, generate_register_markdown, RAW_DATA_DIR
+    audit_and_reconcile_all, RAW_DATA_DIR
 )
 from app.data_pipeline.ml_experiment import (
     CANONICAL_SKILL_PATTERNS, normalize_skill_string, run_naukri_experiment
@@ -842,6 +842,19 @@ def seed_demo_users_and_mentors(db: Session, skill_map: Dict[str, Skill]):
         )
         db.add(seller_profile)
 
+    # 5. Admin / Operations User (Internal Governance)
+    admin_user = db.query(User).filter(User.email == "admin@growsphere.dev").first()
+    if not admin_user:
+        admin_user = User(
+            email="admin@growsphere.dev",
+            hashed_password=hash_password("password123"),
+            full_name="GrowSphere Operations Admin",
+            role=UserRole.ADMIN,
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(admin_user)
+
     db.commit()
     print("Demo accounts and mentor offerings seeded successfully.")
 
@@ -859,11 +872,12 @@ def run_full_pipeline():
 
     try:
         # 2. Build Data Usage Register
-        print("\n[Step 1/5] Building Data Usage Register and Auditing 25 Raw Files...")
-        entries = build_data_usage_register(db)
-        markdown_path = Path(r"D:\GrowSphere\DATA_USAGE_REGISTER.md")
-        generate_register_markdown(entries, markdown_path)
-        print(f"Data Usage Register generated at: {markdown_path}")
+        print("\n[Step 1/5] Auditing and reconciling all 26 manifest files...")
+        from app.data_pipeline.data_register import audit_and_reconcile_all
+        manifest_res = audit_and_reconcile_all(db)
+        print(f"Manifest verified: {manifest_res['verified']}/{manifest_res['total_files']} files present.")
+        print(f"JSON manifest saved at: {manifest_res['json_path']}")
+        print(f"Markdown register saved at: {manifest_res['md_path']}")
 
         # 3. Seed Canonical Skills & Roles
         print("\n[Step 2/5] Seeding Canonical Taxonomy & Dependencies...")

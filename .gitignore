@@ -9,6 +9,8 @@ build/
 venv/
 .venv/
 env/
+.pytest_cache/
+*/.pytest_cache/
 
 # === Node ===
 node_modules/

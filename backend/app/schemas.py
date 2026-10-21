@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation.
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union, Any
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -36,6 +36,29 @@ class UserOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+
+class EmailVerificationConfirm(BaseModel):
+    token: str
+
+
+class OnboardingData(BaseModel):
+    target_role_id: Optional[int] = None
+    education: Optional[str] = None
+    college: Optional[str] = None
+    current_role: Optional[str] = None
+    current_company: Optional[str] = None
+    years_experience: Optional[float] = None
+    goal_mode: Optional[str] = None
 
 
 # ─── Student Profile ─────────────────────────────────────────────────
@@ -366,7 +389,7 @@ class BookingCreate(BaseModel):
 
 
 class BookingStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(accepted|declined|cancelled|completed)$")
+    status: str = Field(..., pattern="^(accepted|confirmed|declined|cancelled|completed)$")
     mentor_notes: Optional[str] = None
     session_link: Optional[str] = None
 
@@ -423,4 +446,146 @@ class MentorDashboard(BaseModel):
     offerings: List[MentorOfferingOut] = []
     upcoming_bookings: List[BookingOut] = []
     total_completed_sessions: int = 0
+
+
+# ─── Auth Extensions & Onboarding ─────────────────────────────────────
+class PasswordResetRequest(BaseModel):
+    email: str
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+
+class EmailVerificationConfirm(BaseModel):
+    token: str
+
+
+class OnboardingData(BaseModel):
+    target_role_id: Optional[int] = None
+    education: Optional[str] = None
+    college: Optional[str] = None
+    current_role: Optional[str] = None
+    current_company: Optional[str] = None
+    years_experience: Optional[float] = None
+    goal_mode: Optional[str] = None
+
+
+class PrivacySettingsUpdate(BaseModel):
+    share_evidence_with_mentors: Optional[bool] = None
+    public_passport: Optional[bool] = None
+    hide_private_goals: Optional[bool] = None
+
+
+# ─── Skill Passport ───────────────────────────────────────────────────
+class SkillPassportOut(BaseModel):
+    slug: str
+    is_public: bool
+    is_revoked: bool
+    verified_at: datetime
+    share_url: str
+    custom_title: Optional[str] = None
+    user_name: str
+    evidence_breakdown: List[dict] = []
+
+    model_config = {"from_attributes": True}
+
+
+# ─── Credit Ledger & Payments ─────────────────────────────────────────
+class CreditBalanceOut(BaseModel):
+    balance: int
+    transactions: List[dict] = []
+
+
+class CreditGrantRequest(BaseModel):
+    user_id: Optional[int] = None
+    amount: int
+    description: str
+    idempotency_key: str
+
+
+class CheckoutRequest(BaseModel):
+    item_type: str = "course"  # course / mentorship
+    item_id: Optional[int] = None
+    course_id: Optional[int] = None
+    amount: float
+    payment_method: Optional[str] = "sandbox_card"
+    idempotency_key: str
+
+
+class CourseCreateRequest(BaseModel):
+    title: str = Field(..., min_length=3, max_length=500)
+    description: Optional[str] = None
+    price: float = 0.0
+    level: Optional[str] = "beginner"
+    duration_hours: Optional[float] = 10.0
+    subject: Optional[str] = "Data & AI"
+    skill_ids: List[int] = []
+
+
+class CourseReviewCreate(BaseModel):
+    rating: float = Field(..., ge=1.0, le=5.0)
+    review_text: Optional[str] = None
+
+
+class MentorAvailabilitySlotCreate(BaseModel):
+    day_of_week: int = Field(..., ge=0, le=6)
+    start_time_str: str = "09:00"
+    end_time_str: str = "17:00"
+
+
+class MentorEndorsementCreate(BaseModel):
+    learner_id: int
+    skill_id: int
+    level: str = "intermediate"
+    comment: Optional[str] = None
+
+
+# ─── AI Mock Interview & Practice ─────────────────────────────────────
+class MockInterviewStartRequest(BaseModel):
+    role_id: Optional[int] = None
+    target_role: Optional[str] = "Data Analyst"
+    interview_type: Optional[str] = "technical"
+    idempotency_key: Optional[str] = None
+
+
+class MockInterviewSubmitRequest(BaseModel):
+    responses: Optional[dict] = None  # {question_id: answer_text}
+    question_id: Optional[Union[int, str]] = None
+    learner_answer: Optional[str] = None
+
+
+class CareerTransitionRequest(BaseModel):
+    current_role: str
+    target_role_id: Optional[int] = None
+    target_role: Optional[str] = None
+
+
+class RoleBasedTaskSubmit(BaseModel):
+    submission_url: Optional[str] = None
+    solution_url: Optional[str] = None
+    submission_notes: Optional[str] = None
+
+
+class SavedOpportunityCreate(BaseModel):
+    job_id: int
+    status: str = "saved"
+    notes: Optional[str] = None
+
+
+class UserReportCreate(BaseModel):
+    reported_user_id: Optional[int] = None
+    reported_listing_type: Optional[str] = None
+    reported_listing_id: Optional[int] = None
+    category: str = "other"
+    details: str = Field(..., min_length=5)
+
+
+class ListingModerationRequest(BaseModel):
+    listing_type: str  # course / mentor
+    listing_id: int
+    action: str  # approve / reject / changes_requested
+    reason: str = Field(..., min_length=3)  # Mandatory recorded reason
+
 

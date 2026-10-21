@@ -41,6 +41,26 @@ def get_current_user(
     return user
 
 
+security_optional = HTTPBearer(auto_error=False)
+
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(security_optional),
+    db: Session = Depends(get_db),
+):
+    """Optionally extract current user without requiring authentication."""
+    if not credentials:
+        return None
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        return db.query(User).filter(User.id == int(user_id)).first()
+    except Exception:
+        return None
+
+
 def require_roles(*roles: UserRole):
     """Factory for role-based access control dependency."""
     def role_checker(current_user: User = Depends(get_current_user)) -> User:

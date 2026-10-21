@@ -135,3 +135,137 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail="Job posting not found")
     return job
+
+
+# ─── Saved Opportunities & Application Tracker ────────────────────────
+@router.post("/save")
+@router.post("/{job_id}/save")
+def save_opportunity(
+    payload: Optional[dict] = None,
+    job_id: Optional[int] = None,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Save an opportunity or track application state."""
+    from app.models import SavedOpportunity, AuditLog, utcnow
+
+    payload = payload or {}
+    effective_job_id = job_id or payload.get("job_id")
+    status_val = payload.get("status", "saved")
+    notes = payload.get("notes")
+
+    if not effective_job_id:
+        raise HTTPException(status_code=400, detail="job_id is required")
+
+    job = db.query(JobPosting).filter(JobPosting.id == effective_job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job posting not found")
+
+    saved = (
+        db.query(SavedOpportunity)
+        .filter(SavedOpportunity.user_id == current_user.id, SavedOpportunity.job_id == effective_job_id)
+        .first()
+    )
+    if not saved:
+        saved = SavedOpportunity(
+            user_id=current_user.id,
+            job_id=effective_job_id,
+            status=status_val,
+            notes=notes,
+            created_at=utcnow(),
+        )
+        db.add(saved)
+    else:
+        saved.status = status_val
+        if notes:
+            saved.notes = notes
+        saved.updated_at = utcnow()
+
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="opportunity.saved",
+        details={"job_id": job.id, "status": status_val},
+    ))
+    db.commit()
+    db.refresh(saved)
+    return {
+        "message": "Opportunity saved successfully",
+        "id": saved.id,
+        "saved_id": saved.id,
+        "status": saved.status,
+    }
+
+
+@router.get("/saved/my")
+def get_my_saved_opportunities(
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """List learner's saved opportunities and active application tracker."""
+    from app.models import SavedOpportunity
+
+    saved_items = (
+        db.query(SavedOpportunity)
+        .options(joinedload(SavedOpportunity.job))
+        .filter(SavedOpportunity.user_id == current_user.id)
+        .order_by(SavedOpportunity.updated_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": item.id,
+            "job_id": item.job_id,
+            "title": item.job.title if item.job else "Opportunity",
+            "company": item.job.company if item.job else "Company",
+            "location": item.job.location if item.job else "Remote",
+            "status": item.status,
+            "notes": item.notes,
+            "saved_at": item.created_at.isoformat(),
+            "updated_at": item.updated_at.isoformat(),
+        }
+        for item in saved_items
+    ]
+
+
+@router.patch("/saved/{saved_id}/status")
+def update_saved_opportunity_status(
+    saved_id: int,
+    payload: dict,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Update status and tracking notes for a saved job or opportunity."""
+    from app.models import SavedOpportunity, AuditLog, utcnow
+
+    saved = (
+        db.query(SavedOpportunity)
+        .filter(SavedOpportunity.id == saved_id, SavedOpportunity.user_id == current_user.id)
+        .first()
+    )
+    if not saved:
+        raise HTTPException(status_code=404, detail="Saved opportunity not found")
+
+    new_status = payload.get("status")
+    if new_status:
+        saved.status = new_status
+    if "notes" in payload:
+        saved.notes = payload["notes"]
+    saved.updated_at = utcnow()
+
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="opportunity.status_updated",
+        details={"saved_id": saved.id, "status": saved.status},
+    ))
+    db.commit()
+    db.refresh(saved)
+
+    return {
+        "message": "Application status updated successfully",
+        "id": saved.id,
+        "status": saved.status,
+        "notes": saved.notes,
+    }
+
+

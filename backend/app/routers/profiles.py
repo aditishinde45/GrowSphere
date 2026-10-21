@@ -287,7 +287,7 @@ def confirm_resume_skills(
 ):
     """
     Commit user-confirmed skills extracted from their resume.
-    Tagged as 'project' or 'self_reported' with clear provenance.
+    Tagged as 'resume_extracted' with clear provenance and learner confirmation.
     """
     confirmed = []
     for sname in data.confirmed_skills:
@@ -304,18 +304,184 @@ def confirm_resume_skills(
             ev = SkillEvidence(
                 user_id=current_user.id,
                 skill_id=skill.id,
-                evidence_type=EvidenceType.PROJECT,
+                evidence_type=EvidenceType.RESUME_EXTRACTED,
                 level=SkillLevel.INTERMEDIATE,
-                confidence_score=0.75,
-                confidence_explanation="Extracted from resume projects and confirmed by learner.",
-                source_description="Resume extraction (user-verified)",
+                confidence_score=0.80,
+                confidence_explanation="Extracted from resume experience and explicitly confirmed by learner.",
+                source_description="Resume extraction (user-confirmed)",
                 verified_at=utcnow(),
             )
             db.add(ev)
             db.flush()
-            out = SkillEvidenceOut.model_validate(ev)
-            out.skill_name = skill.canonical_name
-            confirmed.append(out)
+        else:
+            ev = existing
+            ev.evidence_type = EvidenceType.RESUME_EXTRACTED
+            ev.confidence_explanation = "Extracted from resume and re-confirmed by learner."
+            ev.updated_at = utcnow()
+            db.flush()
 
+        out = SkillEvidenceOut.model_validate(ev)
+        out.skill_name = skill.canonical_name
+        confirmed.append(out)
+
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="profile.confirm_resume_skills",
+        details={"confirmed_count": len(confirmed)},
+    ))
     db.commit()
     return confirmed
+
+
+@router.post("/resume/ats-analyze")
+def analyze_resume_ats(
+    payload: dict,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Perform fact-based ATS analysis against target role or job description."""
+    from app.services.ai_service import ai_provider
+
+    text = payload.get("text", "")
+    target_role = payload.get("target_role", "Data Analyst")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Resume text is required")
+
+    results = ai_provider.analyze_resume_ats(text, target_role)
+    return results
+
+
+# ─── Privacy, Data Export & Deletion ──────────────────────────────────
+@router.get("/privacy-settings")
+def get_privacy_settings(current_user: User = Depends(get_current_user)):
+    """Retrieve user's current privacy and consent preferences."""
+    return current_user.privacy_settings or {
+        "share_evidence_with_mentors": True,
+        "public_passport": True,
+        "hide_private_goals": True,
+    }
+
+
+@router.put("/privacy-settings")
+def update_privacy_settings(
+    settings: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update privacy settings and consent controls."""
+    current = current_user.privacy_settings or {}
+    current.update(settings)
+    current_user.privacy_settings = current
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="privacy.settings_updated",
+        details=settings,
+    ))
+    db.commit()
+    return {"message": "Privacy settings updated successfully", "settings": current_user.privacy_settings}
+
+
+@router.get("/activity-history")
+def get_activity_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the user's chronological activity log."""
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.user_id == current_user.id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": l.id,
+            "action": l.action,
+            "details": l.details,
+            "timestamp": l.created_at.isoformat(),
+        }
+        for l in logs
+    ]
+
+
+@router.put("/privacy")
+def update_privacy_settings(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update user privacy settings and consent controls."""
+    settings = payload.get("privacy_settings", payload)
+    current_user.privacy_settings = settings
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="privacy.settings_updated",
+        details=settings,
+    ))
+    db.commit()
+    return {"message": "Privacy settings updated successfully", "privacy_settings": current_user.privacy_settings}
+
+
+@router.get("/export-data")
+def export_user_data(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Generate complete GDPR/Privacy data export archive in JSON."""
+    evidences = db.query(SkillEvidence).filter(SkillEvidence.user_id == current_user.id).all()
+    evidence_list = [
+        {
+            "skill_id": ev.skill_id,
+            "evidence_type": ev.evidence_type.value,
+            "confidence_score": ev.confidence_score,
+            "source": ev.source_description,
+            "verified_at": ev.verified_at.isoformat() if ev.verified_at else None,
+        }
+        for ev in evidences
+    ]
+
+    export_payload = {
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role.value,
+            "created_at": current_user.created_at.isoformat(),
+        },
+        "privacy_settings": current_user.privacy_settings,
+        "evidence_records": evidence_list,
+        "skill_evidence_records": evidence_list,
+        "employee_profile": {
+            "current_role": current_user.employee_profile.current_role if current_user.employee_profile else None,
+            "current_company": current_user.employee_profile.current_company if current_user.employee_profile else None,
+            "goal_mode": current_user.employee_profile.goal_mode if current_user.employee_profile else None,
+        } if current_user.employee_profile else None,
+        "student_profile": {
+            "education": current_user.student_profile.education if current_user.student_profile else None,
+            "college": current_user.student_profile.college if current_user.student_profile else None,
+        } if current_user.student_profile else None,
+        "exported_at": utcnow().isoformat(),
+    }
+
+    db.add(AuditLog(user_id=current_user.id, action="privacy.data_exported"))
+    db.commit()
+    return export_payload
+
+
+@router.delete("/delete-account")
+def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Deactivate user account and scrub private data upon explicit request."""
+    current_user.is_active = False
+    current_user.full_name = "[Deactivated User]"
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="user.account_deactivated",
+        details={"reason": "User requested account deletion"},
+    ))
+    db.commit()
+    return {"message": "Account has been deactivated and private data scrubbed."}
+

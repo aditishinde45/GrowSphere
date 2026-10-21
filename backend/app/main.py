@@ -12,7 +12,9 @@ from app.core.config import settings
 from app.core.database import engine, Base
 from app.routers import (
     auth, skills, roadmap, assessments, courses,
-    jobs, mentors, profiles, dashboard, data_register
+    jobs, mentors, profiles, dashboard, data_register,
+    passport, credits, payments, mock_interview,
+    career_transition, learning_materials, admin
 )
 
 
@@ -33,7 +35,7 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows Vite dev server & test clients
+    allow_origins=settings.cors_origins_list or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,6 +52,13 @@ app.include_router(mentors.router, prefix="/api")
 app.include_router(profiles.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(data_register.router, prefix="/api")
+app.include_router(passport.router, prefix="/api")
+app.include_router(credits.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
+app.include_router(mock_interview.router, prefix="/api")
+app.include_router(career_transition.router, prefix="/api")
+app.include_router(learning_materials.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 
 @app.get("/")
@@ -59,10 +68,25 @@ def root():
         "status": "online",
         "version": "1.0.0",
         "docs": "/docs",
-        "evidence_loop": "Market Evidence -> Skill Requirements -> Profile -> Gap Analysis -> Roadmap -> Learning -> Assessment -> Verified Evidence -> Opportunities",
+        "evidence_loop": (
+            "dated market evidence -> target role -> learner profile and evidence -> "
+            "skill-gap analysis -> dependency-aware roadmap -> learning resources -> "
+            "assessment and practical proof -> updated skill profile and Skill Passport -> "
+            "relevant courses, mentors, interviews, jobs and internships -> refreshed market evidence"
+        ),
     }
 
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "database": "connected"}
+
+
+@app.get("/health/db")
+def database_health_check():
+    """Verify live database connectivity and roundtrip latency."""
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        res = conn.execute(text("SELECT 1")).scalar()
+    return {"status": "healthy", "database_connected": bool(res == 1), "engine": engine.name}
+

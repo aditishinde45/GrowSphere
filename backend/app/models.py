@@ -22,7 +22,7 @@ from app.core.database import Base
 
 # ─── Helpers ──────────────────────────────────────────────────────────
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ─── Enums ────────────────────────────────────────────────────────────
@@ -55,6 +55,7 @@ class BookingStatus(str, enum.Enum):
 
 class EvidenceType(str, enum.Enum):
     SELF_REPORTED = "self_reported"
+    RESUME_EXTRACTED = "resume_extracted"
     ASSESSED = "assessed"
     PROJECT = "project"
     MENTOR_ENDORSED = "mentor_endorsed"
@@ -105,6 +106,9 @@ class User(Base):
     role = Column(Enum(UserRole), nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    email_verified = Column(Boolean, default=True, server_default="1", nullable=False)
+    privacy_settings = Column(JSON, default=lambda: {"share_evidence_with_mentors": True, "public_passport": True, "hide_private_goals": True})
+    notification_preferences = Column(JSON, default=lambda: {"email_notifications": True, "session_reminders": True, "weekly_digest": True})
     created_at = Column(DateTime, default=utcnow, nullable=False)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
@@ -529,3 +533,312 @@ class DataUsageRecord(Base):
     status = Column(String(50), default="processed")  # processed / archived / quarantined / reference
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow)
+
+
+# ─── Skill Passport & Public Verification ─────────────────────────────
+class SkillPassport(Base):
+    __tablename__ = "skill_passports"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    custom_title = Column(String(255), nullable=True)
+    is_public = Column(Boolean, default=True)
+    is_revoked = Column(Boolean, default=False)
+    share_token = Column(String(64), nullable=True)
+    verified_at = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User")
+
+
+# ─── Course Marketplace Extensions ────────────────────────────────────
+class CourseEnrollment(Base):
+    __tablename__ = "course_enrollments"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    progress_percentage = Column(Float, default=0.0)
+    is_completed = Column(Boolean, default=False)
+    enrolled_at = Column(DateTime, default=utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_enrollment"),
+    )
+
+    user = relationship("User")
+    course = relationship("Course")
+
+
+class CourseReview(Base):
+    __tablename__ = "course_reviews"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    rating = Column(Float, nullable=False)
+    review_text = Column(Text, nullable=True)
+    is_verified_purchase = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_review"),
+    )
+
+    user = relationship("User")
+    course = relationship("Course")
+
+
+# ─── Mentor Availability & Endorsements ──────────────────────────────
+class MentorAvailabilitySlot(Base):
+    __tablename__ = "mentor_availability_slots"
+
+    id = Column(Integer, primary_key=True)
+    mentor_id = Column(Integer, ForeignKey("mentor_profiles.id"), nullable=False, index=True)
+    day_of_week = Column(Integer, nullable=False)  # 0=Mon, 6=Sun
+    start_time_str = Column(String(10), nullable=False)  # "09:00"
+    end_time_str = Column(String(10), nullable=False)  # "17:00"
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    mentor = relationship("MentorProfile")
+
+
+class MentorEndorsement(Base):
+    __tablename__ = "mentor_endorsements"
+
+    id = Column(Integer, primary_key=True)
+    mentor_id = Column(Integer, ForeignKey("mentor_profiles.id"), nullable=False, index=True)
+    learner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    skill_id = Column(Integer, ForeignKey("skills.id"), nullable=False, index=True)
+    level = Column(Enum(SkillLevel), default=SkillLevel.INTERMEDIATE)
+    comment = Column(Text, nullable=True)
+    evidence_url = Column(String(1000), nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    mentor = relationship("MentorProfile")
+    learner = relationship("User", foreign_keys=[learner_id])
+    skill = relationship("Skill")
+
+
+# ─── Credit Ledger & Monetization ─────────────────────────────────────
+class CreditLedger(Base):
+    """
+    Auditable, idempotent ledger for grants, reservations, consumption, refunds, and adjustments.
+    """
+    __tablename__ = "credit_ledger"
+
+    id = Column(Integer, primary_key=True)
+    idempotency_key = Column(String(100), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    amount = Column(Integer, nullable=False)  # Positive for grant/refund, negative for consumption
+    balance_after = Column(Integer, nullable=False)
+    transaction_type = Column(String(50), nullable=False)  # grant, reserve, consume, refund, adjustment
+    description = Column(String(255), nullable=True)
+    reference_type = Column(String(50), nullable=True)  # mock_interview, payment, course, admin_grant
+    reference_id = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
+
+    user = relationship("User")
+
+
+class PaymentOrder(Base):
+    """
+    Monetization order supporting sandbox provider, commission calculation, and payouts.
+    """
+    __tablename__ = "payment_orders"
+
+    id = Column(Integer, primary_key=True)
+    idempotency_key = Column(String(100), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String(10), default="INR")
+    status = Column(String(50), default="pending", index=True)  # pending, completed, failed, refunded
+    provider = Column(String(50), default="sandbox")  # sandbox / stripe / razorpay
+    provider_payment_id = Column(String(100), nullable=True)
+    commission_amount = Column(Float, default=0.0)  # Platform commission
+    seller_payout_amount = Column(Float, default=0.0)
+    items_json = Column(JSON, nullable=True)
+    receipt_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User")
+
+
+class PayoutRecord(Base):
+    __tablename__ = "payout_records"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_role = Column(String(50), nullable=False)  # seller / mentor
+    amount = Column(Float, nullable=False)
+    currency = Column(String(10), default="INR")
+    status = Column(String(50), default="completed", index=True)  # pending, processing, completed, failed
+    notes = Column(Text, nullable=True)
+    failure_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User")
+
+
+# ─── Mock Interview & Learning Materials ──────────────────────────────
+class MockInterviewSession(Base):
+    __tablename__ = "mock_interview_sessions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    credit_cost = Column(Integer, default=10)
+    status = Column(String(50), default="completed")  # scheduled, in_progress, completed, cancelled
+    consent_given = Column(Boolean, default=True)
+    questions = Column(JSON, nullable=True)
+    responses = Column(JSON, nullable=True)
+    feedback_report = Column(JSON, nullable=True)
+    overall_score = Column(Float, nullable=True)  # 0.0-1.0
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+    role = relationship("CareerRole")
+
+
+class LearningMaterial(Base):
+    __tablename__ = "learning_materials"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    topic_id = Column(Integer, ForeignKey("roadmap_topics.id"), nullable=True)
+    skill_id = Column(Integer, ForeignKey("skills.id"), nullable=True)
+    material_type = Column(String(50), nullable=False)  # notes, flashcards, practice_questions
+    title = Column(String(255), nullable=False)
+    content_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+    topic = relationship("RoadmapTopic")
+    skill = relationship("Skill")
+
+
+# ─── Career Transition & Practical Tasks ──────────────────────────────
+class CareerTransitionAnalysis(Base):
+    __tablename__ = "career_transition_analyses"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    current_role = Column(String(255), nullable=False)
+    target_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=False)
+    transferable_skills = Column(JSON, nullable=True)
+    missing_skills = Column(JSON, nullable=True)
+    match_score = Column(Float, nullable=False)
+    estimated_effort_weeks = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+    target_role = relationship("CareerRole")
+
+
+class RoleBasedTask(Base):
+    __tablename__ = "role_based_tasks"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=True)
+    skill_id = Column(Integer, ForeignKey("skills.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    rubric = Column(JSON, nullable=True)
+    submission_url = Column(String(1000), nullable=True)
+    status = Column(String(50), default="pending")  # pending, submitted, evaluated
+    score = Column(Float, nullable=True)
+    feedback = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    user = relationship("User")
+    skill = relationship("Skill")
+
+
+# ─── Saved Opportunities & Tracking ───────────────────────────────────
+class SavedOpportunity(Base):
+    __tablename__ = "saved_opportunities"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("job_postings.id"), nullable=False, index=True)
+    status = Column(String(50), default="saved")  # saved, applied, interviewing, offered, rejected
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", name="uq_user_job_saved"),
+    )
+
+    user = relationship("User")
+    job = relationship("JobPosting")
+
+
+# ─── Moderation, Trust & Support ──────────────────────────────────────
+class UserReport(Base):
+    __tablename__ = "user_reports"
+
+    id = Column(Integer, primary_key=True)
+    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    reported_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reported_listing_type = Column(String(50), nullable=True)  # course / mentor
+    reported_listing_id = Column(Integer, nullable=True)
+    category = Column(String(100), nullable=False)  # spam, abuse, misleading, copyright, other
+    details = Column(Text, nullable=False)
+    status = Column(String(50), default="open")  # open, in_review, resolved
+    resolution_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    reporter = relationship("User", foreign_keys=[reporter_id])
+    reported_user = relationship("User", foreign_keys=[reported_user_id])
+
+
+class ListingModerationReview(Base):
+    __tablename__ = "listing_moderation_reviews"
+
+    id = Column(Integer, primary_key=True)
+    listing_type = Column(String(50), nullable=False)  # course / mentor
+    listing_id = Column(Integer, nullable=False)
+    reviewer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String(50), nullable=False)  # approve, reject, changes_requested
+    reason = Column(Text, nullable=False)  # Mandatory recorded reason
+    created_at = Column(DateTime, default=utcnow)
+
+    reviewer = relationship("User")
+
+
+# ─── Auth Tokens ──────────────────────────────────────────────────────
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(100), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+
+
+class EmailVerificationToken(Base):
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(100), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")

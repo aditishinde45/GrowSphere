@@ -1,23 +1,29 @@
 """
-Data Usage Register API router — provides transparency into all 25 files,
-cryptographic checksums, processing lineages, and governance restrictions.
+Data Usage Register API router — provides governance transparency into all 26 files,
+cryptographic checksums, processing lineages, and restrictions.
+Detailed register access is strictly restricted to authorized Admin/Operations users.
 """
 
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import DataUsageRecord
+from app.models import DataUsageRecord, User, UserRole
+from app.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/data-register", tags=["Data Usage Register"])
 
 
 @router.get("/")
-def get_data_usage_register(db: Session = Depends(get_db)):
+def get_data_usage_register(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     """
     Get the official Data Usage Register covering every provided raw dataset,
     cryptographic SHA-256 hashes, assigned roles, deduplication methods, and restrictions.
+    STRICTLY RESTRICTED TO ADMIN / OPERATIONS ROLE.
     """
     records = db.query(DataUsageRecord).order_by(DataUsageRecord.id).all()
     return [
@@ -43,8 +49,14 @@ def get_data_usage_register(db: Session = Depends(get_db)):
 
 
 @router.get("/summary")
-def get_register_summary(db: Session = Depends(get_db)):
-    """High-level summary of data files and governance statuses."""
+def get_register_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    High-level governance summary of data files and quarantine statuses.
+    Accessible to authenticated platform users for audit transparency.
+    """
     records = db.query(DataUsageRecord).all()
     total_files = len(records)
     total_raw_rows = sum(r.raw_row_count or 0 for r in records)

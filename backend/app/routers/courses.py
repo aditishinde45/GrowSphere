@@ -10,10 +10,11 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.models import (
     User, UserRole, Course, Skill, SkillEvidence, CareerRole,
-    SellerProfile, ListingStatus, AuditLog, course_skills
+    SellerProfile, ListingStatus, AuditLog, course_skills,
+    CourseEnrollment, CourseReview, utcnow
 )
 from app.schemas import (
-    CourseOut, CourseRecommendation, CourseCreate, SkillOut
+    CourseOut, CourseRecommendation, CourseCreate, SkillOut, CourseReviewCreate
 )
 from app.dependencies import get_current_user, require_learner, require_seller
 
@@ -230,3 +231,196 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return course
+
+
+@router.get("/seller/listings")
+def get_seller_listings(
+    current_user: User = Depends(require_seller),
+    db: Session = Depends(get_db),
+):
+    """Retrieve all course listings created by the current seller."""
+    seller_profile = db.query(SellerProfile).filter(SellerProfile.user_id == current_user.id).first()
+    if not seller_profile:
+        raise HTTPException(status_code=404, detail="Seller profile not found")
+
+    courses = (
+        db.query(Course)
+        .options(joinedload(Course.skills))
+        .filter(Course.seller_id == seller_profile.id)
+        .all()
+    )
+
+    out = []
+    for c in courses:
+        enrollment_count = db.query(CourseEnrollment).filter(CourseEnrollment.course_id == c.id).count()
+        out.append({
+            "id": c.id,
+            "title": c.title,
+            "description": c.description,
+            "price": c.price,
+            "level": c.level,
+            "listing_status": c.listing_status.value,
+            "enrollment_count": enrollment_count,
+            "rating": c.rating or 4.5,
+            "skills": [s.canonical_name for s in c.skills],
+        })
+    return out
+
+
+@router.patch("/{course_id}/status")
+def update_course_listing_status(
+    course_id: int,
+    payload: dict,
+    current_user: User = Depends(require_seller),
+    db: Session = Depends(get_db),
+):
+    """Manage course lifecycle (draft, pending_review, published, paused, archived)."""
+    seller_profile = db.query(SellerProfile).filter(SellerProfile.user_id == current_user.id).first()
+    course = db.query(Course).filter(Course.id == course_id, Course.seller_id == seller_profile.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+
+    new_status = payload.get("status")
+    if new_status not in [s.value for s in ListingStatus]:
+        raise HTTPException(status_code=400, detail="Invalid listing status")
+
+    course.listing_status = ListingStatus(new_status)
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="course.update_status",
+        details={"course_id": course.id, "new_status": new_status},
+    ))
+    db.commit()
+    return {
+        "message": "Course status updated",
+        "status": course.listing_status.value,
+        "listing_status": course.listing_status.value,
+    }
+
+
+@router.post("/{course_id}/enroll")
+def enroll_course(
+    course_id: int,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """
+    Enroll in a course.
+    Note: Course enrollment/completion alone does NOT verify a skill.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    existing = (
+        db.query(CourseEnrollment)
+        .filter(CourseEnrollment.user_id == current_user.id, CourseEnrollment.course_id == course_id)
+        .first()
+    )
+    if existing:
+        return {"message": "Already enrolled", "enrollment_id": existing.id, "progress": existing.progress_percentage}
+
+    enrollment = CourseEnrollment(
+        user_id=current_user.id,
+        course_id=course.id,
+        progress_percentage=0.0,
+        enrolled_at=utcnow(),
+    )
+    db.add(enrollment)
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="course.enrolled",
+        details={"course_id": course.id, "title": course.title},
+    ))
+    db.commit()
+    return {"message": "Enrolled successfully", "enrollment_id": enrollment.id}
+
+
+@router.get("/enrollments/my")
+def get_my_enrollments(
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Retrieve all course enrollments for the current learner."""
+    enrollments = (
+        db.query(CourseEnrollment)
+        .options(joinedload(CourseEnrollment.course))
+        .filter(CourseEnrollment.user_id == current_user.id)
+        .all()
+    )
+    return [
+        {
+            "id": e.id,
+            "course_id": e.course_id,
+            "title": e.course.title if e.course else "Course",
+            "progress_percentage": e.progress_percentage,
+            "is_completed": e.is_completed,
+            "enrolled_at": e.enrolled_at.isoformat() if e.enrolled_at else None,
+        }
+        for e in enrollments
+    ]
+
+
+@router.post("/{course_id}/review")
+@router.post("/{course_id}/reviews")
+def review_course(
+    course_id: int,
+    data: CourseReviewCreate,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Submit course review. Restricted to verified enrolled learners."""
+    enrollment = (
+        db.query(CourseEnrollment)
+        .filter(CourseEnrollment.user_id == current_user.id, CourseEnrollment.course_id == course_id)
+        .first()
+    )
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Only enrolled learners may submit course reviews.")
+
+    existing_review = (
+        db.query(CourseReview)
+        .filter(CourseReview.user_id == current_user.id, CourseReview.course_id == course_id)
+        .first()
+    )
+    if existing_review:
+        existing_review.rating = data.rating
+        existing_review.review_text = data.review_text
+        db.commit()
+        return {"message": "Review updated successfully", "review_id": existing_review.id}
+
+    review = CourseReview(
+        user_id=current_user.id,
+        course_id=course_id,
+        rating=data.rating,
+        review_text=data.review_text,
+        is_verified_purchase=True,
+        created_at=utcnow(),
+    )
+    db.add(review)
+    db.commit()
+    return {"message": "Review submitted successfully", "review_id": review.id}
+
+
+@router.get("/{course_id}/reviews")
+def get_course_reviews(course_id: int, db: Session = Depends(get_db)):
+    """Retrieve verified reviews for a course."""
+    reviews = (
+        db.query(CourseReview)
+        .options(joinedload(CourseReview.user))
+        .filter(CourseReview.course_id == course_id)
+        .order_by(CourseReview.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": r.id,
+            "rating": r.rating,
+            "review_text": r.review_text,
+            "author": r.user.full_name if r.user else "Learner",
+            "is_verified_purchase": r.is_verified_purchase,
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in reviews
+    ]
+
