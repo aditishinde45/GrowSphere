@@ -1,0 +1,58 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+env/
+.pytest_cache/
+*/.pytest_cache/
+
+# === Node ===
+node_modules/
+frontend/dist/
+frontend/build/
+.next/
+
+# === Environment & Secrets ===
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# === Data (large files, not tracked) ===
+_raw_data/
+*.zip
+*.csv
+*.xlsx
+!backend/seed/demo_*.csv
+
+# === Model artifacts ===
+backend/ml/artifacts/*.joblib
+backend/ml/artifacts/*.pkl
+backend/ml/artifacts/*.json
+!backend/ml/artifacts/.gitkeep
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs ===
+*.log
+logs/
+
+# === Database ===
+*.db
+*.sqlite3
