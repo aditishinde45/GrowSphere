@@ -26,7 +26,7 @@ frontend/build/
 *.key
 
 # === Data (large files, not tracked) ===
-_raw_data/
+
 *.zip
 # === Model artifacts ===
 backend/ml/artifacts/*.joblib
