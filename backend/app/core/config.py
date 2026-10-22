@@ -45,7 +45,10 @@ class Settings(BaseSettings):
     # --- Provider Modes (Sandbox / Live) ---
     EMAIL_PROVIDER: str = "sandbox"  # sandbox / smtp
     PAYMENT_PROVIDER: str = "sandbox"  # sandbox / stripe / razorpay
-    AI_PROVIDER: str = "sandbox"  # sandbox / openai
+    AI_PROVIDER: str = "gemini"  # gemini / openai / sandbox
+    AI_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.8-flash"
     CALENDAR_PROVIDER: str = "sandbox"  # sandbox / google
 
     @property
