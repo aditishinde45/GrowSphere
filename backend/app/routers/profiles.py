@@ -1,28 +1,70 @@
 """
 User Profiles & Skill Evidence router — student/employee profile management,
-skill evidence logging, and explainable resume skill extraction.
+skill evidence logging, secure PDF/DOCX resume extraction, and privacy controls.
 """
 
+import os
+import io
+import zipfile
+import xml.etree.ElementTree as ET
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.models import (
     User, UserRole, StudentProfile, EmployeeProfile, Skill, SkillEvidence,
-    EvidenceType, SkillLevel, CareerRole, AuditLog, utcnow
+    EvidenceType, SkillLevel, CareerRole, Resume, AuditLog, utcnow
 )
 from app.schemas import (
     StudentProfileOut, StudentProfileCreate,
     EmployeeProfileOut, EmployeeProfileCreate,
     SkillEvidenceOut, SkillEvidenceCreate,
-    ResumeConfirmSkills
+    ResumeConfirmSkills, ResumeOut
 )
 from app.dependencies import get_current_user, require_learner, require_student, require_employee
 from app.data_pipeline.ml_experiment import extract_skills_explainable
 
 router = APIRouter(prefix="/profiles", tags=["Profiles & Evidence"])
+
+
+# ─── Resume Text Extraction Helper ────────────────────────────────────
+def extract_text_from_upload(filename: str, content: bytes) -> str:
+    """Extract raw text from PDF, DOCX, or TXT file bytes without inventing facts."""
+    ext = os.path.splitext(filename)[1].lower()
+    text = ""
+    if ext == ".pdf":
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(content))
+            for page in reader.pages:
+                t = page.extract_text()
+                if t:
+                    text += t + "\n"
+        except Exception:
+            try:
+                from pdfminer.high_level import extract_text as pdfminer_extract
+                text = pdfminer_extract(io.BytesIO(content))
+            except Exception:
+                text = ""
+    elif ext in (".docx", ".doc"):
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as z:
+                if "word/document.xml" in z.namelist():
+                    xml_content = z.read("word/document.xml")
+                    tree = ET.fromstring(xml_content)
+                    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                    texts = [node.text for node in tree.iterfind(".//w:t", ns) if node.text]
+                    text = " ".join(texts)
+        except Exception:
+            text = ""
+    else:  # .txt or plain text
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            text = content.decode("latin-1", errors="ignore")
+    return text.strip()
 
 
 # ─── Student Profile ──────────────────────────────────────────────────
@@ -74,6 +116,14 @@ def update_student_profile(
         profile.education = data.education
     if data.graduation_year is not None:
         profile.graduation_year = data.graduation_year
+    if data.location is not None:
+        profile.location = data.location
+    if data.learning_time_hours_per_week is not None:
+        profile.learning_time_hours_per_week = data.learning_time_hours_per_week
+    if data.preferred_languages is not None:
+        profile.preferred_languages = data.preferred_languages
+    if data.opportunity_preferences is not None:
+        profile.opportunity_preferences = data.opportunity_preferences
     if data.bio is not None:
         profile.bio = data.bio
     if data.github_url is not None:
@@ -104,7 +154,8 @@ def get_employee_profile(
 ):
     """
     Get the current employee's profile.
-    NOTE: 'career_goal' is explicitly omitted from output schema for privacy.
+    Career goal is returned to the authenticated employee themselves,
+    and kept strictly confidential from employers/sellers/mentors.
     """
     profile = (
         db.query(EmployeeProfile)
@@ -121,6 +172,8 @@ def get_employee_profile(
     out = EmployeeProfileOut.model_validate(profile)
     if profile.target_role:
         out.target_role_title = profile.target_role.title
+    # Scoped to authenticated employee owner:
+    out.career_goal = profile.career_goal
     return out
 
 
@@ -132,7 +185,7 @@ def update_employee_profile(
 ):
     """
     Update employee profile details.
-    Career goal is stored encrypted/privately and never exposed to employers.
+    Career goal is stored privately and never exposed to employers.
     """
     profile = db.query(EmployeeProfile).filter(EmployeeProfile.user_id == current_user.id).first()
     if not profile:
@@ -151,10 +204,18 @@ def update_employee_profile(
         profile.current_company = data.current_company
     if data.years_experience is not None:
         profile.years_experience = data.years_experience
+    if data.industry is not None:
+        profile.industry = data.industry
     if data.career_goal is not None:
-        profile.career_goal = data.career_goal  # Kept private
+        profile.career_goal = data.career_goal  # Private
     if data.goal_mode is not None:
         profile.goal_mode = data.goal_mode
+    if data.career_change_intent is not None:
+        profile.career_change_intent = data.career_change_intent
+    if data.learning_schedule is not None:
+        profile.learning_schedule = data.learning_schedule
+    if data.preferences is not None:
+        profile.preferences = data.preferences
     if data.bio is not None:
         profile.bio = data.bio
 
@@ -170,6 +231,7 @@ def update_employee_profile(
     out = EmployeeProfileOut.model_validate(profile)
     if profile.target_role:
         out.target_role_title = profile.target_role.title
+    out.career_goal = profile.career_goal
     return out
 
 
@@ -179,7 +241,7 @@ def get_user_skills(
     current_user: User = Depends(require_learner),
     db: Session = Depends(get_db),
 ):
-    """List all skill evidences for current user (verified and self-reported)."""
+    """List all skill evidences for current user (verified, self-reported, resume, project)."""
     evidences = (
         db.query(SkillEvidence)
         .options(joinedload(SkillEvidence.skill))
@@ -240,13 +302,45 @@ def add_self_reported_skill(
     return out
 
 
+@router.put("/skills/{evidence_id}", response_model=SkillEvidenceOut)
+def update_skill_evidence(
+    evidence_id: int,
+    payload: dict,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Learner updates level or notes for eligible self-reported evidence."""
+    evidence = db.query(SkillEvidence).filter(
+        SkillEvidence.id == evidence_id,
+        SkillEvidence.user_id == current_user.id,
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Skill evidence not found")
+
+    if evidence.evidence_type == EvidenceType.ASSESSED:
+        raise HTTPException(status_code=400, detail="Verified assessment evidence cannot be manually modified.")
+
+    if "level" in payload and payload["level"]:
+        evidence.level = SkillLevel(payload["level"])
+    if "source_description" in payload:
+        evidence.source_description = payload["source_description"]
+    evidence.updated_at = utcnow()
+
+    db.commit()
+    db.refresh(evidence)
+
+    out = SkillEvidenceOut.model_validate(evidence)
+    out.skill_name = evidence.skill.canonical_name if evidence.skill else "Unknown"
+    return out
+
+
 @router.delete("/skills/{evidence_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_skill_evidence(
     evidence_id: int,
     current_user: User = Depends(require_learner),
     db: Session = Depends(get_db),
 ):
-    """Remove a self-reported skill evidence."""
+    """Remove self-reported, resume-extracted, or project evidence. Assessed proof is protected."""
     evidence = db.query(SkillEvidence).filter(
         SkillEvidence.id == evidence_id,
         SkillEvidence.user_id == current_user.id,
@@ -259,6 +353,137 @@ def remove_skill_evidence(
 
     db.delete(evidence)
     db.commit()
+
+
+# ─── Resume Tools: Upload, Scan, List, Delete ─────────────────────────
+@router.post("/resume/upload")
+async def upload_resume(
+    file: UploadFile = File(...),
+    target_role: Optional[str] = Form(None),
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """
+    Securely upload PDF/DOCX/TXT resume, extract text without inventing facts,
+    and analyze against target career role.
+    """
+    allowed_exts = {".pdf", ".docx", ".doc", ".txt"}
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Please upload a PDF, DOCX, or TXT document.",
+        )
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File size exceeds maximum 10MB limit.")
+
+    extracted_text = extract_text_from_upload(file.filename or "resume.txt", content)
+    if not extracted_text:
+        raise HTTPException(status_code=400, detail="Could not extract readable text from the uploaded file.")
+
+    # Storage directory
+    upload_dir = os.path.join("storage", "resumes", str(current_user.id))
+    os.makedirs(upload_dir, exist_ok=True)
+    safe_filename = f"{utcnow().strftime('%Y%m%d%H%M%S')}_{os.path.basename(file.filename or 'resume')}"
+    file_path = os.path.join(upload_dir, safe_filename)
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # Explainable skill extraction
+    extraction_result = extract_skills_explainable(extracted_text)
+
+    # ATS analysis against target role
+    target = target_role or "Data Analyst"
+    from app.services.ai_service import ai_provider
+    ats_results = ai_provider.analyze_resume_ats(extracted_text, target)
+
+    resume_record = Resume(
+        user_id=current_user.id,
+        filename=file.filename or "resume",
+        file_path=file_path,
+        file_size_bytes=len(content),
+        extracted_text=extracted_text,
+        extracted_skills=extraction_result.get("extracted_skills", []),
+        processing_status="completed",
+        uploaded_at=utcnow(),
+    )
+    db.add(resume_record)
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="resume.uploaded",
+        details={"filename": file.filename, "size": len(content), "skills_found": len(extraction_result.get("extracted_skills", []))},
+    ))
+    db.commit()
+    db.refresh(resume_record)
+
+    return {
+        "id": resume_record.id,
+        "filename": resume_record.filename,
+        "file_size_bytes": resume_record.file_size_bytes,
+        "extracted_text_preview": extracted_text[:400] + ("..." if len(extracted_text) > 400 else ""),
+        "extracted_skills": extraction_result.get("extracted_skills", []),
+        "ats_analysis": ats_results,
+        "uploaded_at": resume_record.uploaded_at.isoformat(),
+        "message": "Resume uploaded and scanned. Review and confirm extracted skills to add them to your profile.",
+    }
+
+
+@router.get("/resume")
+def list_user_resumes(
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """List all uploaded resumes for the current learner."""
+    resumes = (
+        db.query(Resume)
+        .filter(Resume.user_id == current_user.id)
+        .order_by(Resume.uploaded_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": r.id,
+            "filename": r.filename,
+            "file_size_bytes": r.file_size_bytes,
+            "extracted_text_preview": (r.extracted_text[:200] + "...") if r.extracted_text else "",
+            "extracted_skills": r.extracted_skills or [],
+            "processing_status": r.processing_status,
+            "uploaded_at": r.uploaded_at.isoformat() if r.uploaded_at else None,
+        }
+        for r in resumes
+    ]
+
+
+@router.delete("/resume/{resume_id}")
+def delete_user_resume(
+    resume_id: int,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Securely delete an uploaded resume and remove stored file."""
+    resume = db.query(Resume).filter(
+        Resume.id == resume_id,
+        Resume.user_id == current_user.id,
+    ).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if resume.file_path and os.path.exists(resume.file_path):
+        try:
+            os.remove(resume.file_path)
+        except OSError:
+            pass
+
+    db.delete(resume)
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="resume.deleted",
+        details={"resume_id": resume_id, "filename": resume.filename},
+    ))
+    db.commit()
+    return {"message": "Resume securely deleted."}
 
 
 # ─── Resume Skill Extraction & Confirmation ───────────────────────────

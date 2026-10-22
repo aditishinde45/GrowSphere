@@ -132,6 +132,10 @@ class StudentProfile(Base):
     education = Column(Text, nullable=True)
     college = Column(String(255), nullable=True)
     graduation_year = Column(Integer, nullable=True)
+    location = Column(String(255), nullable=True)
+    learning_time_hours_per_week = Column(Float, nullable=True)
+    preferred_languages = Column(JSON, nullable=True)  # List of language strings, e.g. ["English"]
+    opportunity_preferences = Column(JSON, nullable=True)  # e.g. ["internship", "job", "hackathon"]
     bio = Column(Text, nullable=True)
     github_url = Column(String(500), nullable=True)
     portfolio_url = Column(String(500), nullable=True)
@@ -151,8 +155,12 @@ class EmployeeProfile(Base):
     current_company = Column(String(255), nullable=True)
     target_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=True)
     years_experience = Column(Float, nullable=True)
+    industry = Column(String(255), nullable=True)
     career_goal = Column(Text, nullable=True)  # Private — never exposed without consent
     goal_mode = Column(String(50), nullable=True)  # promotion / reskill / career_switch
+    career_change_intent = Column(String(255), nullable=True)  # e.g. actively_looking / internal_promotion
+    learning_schedule = Column(String(255), nullable=True)  # e.g. "Evenings & weekends (8 hrs/week)"
+    preferences = Column(JSON, nullable=True)  # e.g. {"remote_preference": "hybrid"}
     bio = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
