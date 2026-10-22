@@ -8,7 +8,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
-from app.models import User, CareerRole, SkillEvidence, RoleBasedTask, CareerTransitionAnalysis, AuditLog, utcnow
+from app.models import (
+    User,
+    CareerRole,
+    SkillEvidence,
+    RoleBasedTask,
+    CareerTransitionAnalysis,
+    AuditLog,
+    utcnow,
+    EvidenceType,
+    SkillLevel,
+)
 from app.schemas import CareerTransitionRequest, RoleBasedTaskSubmit
 from app.dependencies import require_learner, get_current_user_optional
 
@@ -42,15 +52,20 @@ def analyze_career_transition(
         .filter(SkillEvidence.user_id == current_user.id)
         .all()
     )
-    user_skill_names = {ev.skill.canonical_name for ev in user_evidences if ev.skill}
+    verified_types = {"assessed", "project", "mentor_endorsed"}
+    verified_skill_names = {ev.skill.canonical_name for ev in user_evidences if ev.skill and ev.evidence_type.value in verified_types}
+    all_user_skill_names = {ev.skill.canonical_name for ev in user_evidences if ev.skill}
+
     target_skill_names = [s.canonical_name for s in target.required_skills]
 
-    transferable = [s for s in target_skill_names if s in user_skill_names]
-    missing = [s for s in target_skill_names if s not in user_skill_names]
+    transferable_verified = [s for s in target_skill_names if s in verified_skill_names]
+    needs_stronger_evidence = [s for s in target_skill_names if s in all_user_skill_names and s not in verified_skill_names]
+    transferable = [s for s in target_skill_names if s in all_user_skill_names]
+    missing = [s for s in target_skill_names if s not in all_user_skill_names]
 
     overlap_ratio = len(transferable) / max(len(target_skill_names), 1)
-    # Estimate effort: ~3 weeks per missing skill topic
-    estimated_weeks = max(len(missing) * 3, 2)
+    # Estimate effort: ~2-3 weeks per missing or unverified skill topic
+    estimated_weeks = max((len(missing) * 3) + len(needs_stronger_evidence), 2)
 
     analysis = CareerTransitionAnalysis(
         user_id=current_user.id,
@@ -76,8 +91,11 @@ def analyze_career_transition(
         "match_score": round(overlap_ratio, 2),
         "overlap_percentage": round(overlap_ratio * 100, 1),
         "transferable_skills": transferable,
+        "transferable_verified": transferable_verified,
+        "needs_stronger_evidence": needs_stronger_evidence,
         "missing_skills": missing,
         "estimated_effort_weeks": estimated_weeks,
+        "uncertainty_explanation": "Estimates reflect heuristic projections and depend on weekly learning schedule (e.g. 8-10 hrs/week).",
         "advisory_note": "Effort estimates are heuristic planning projections, not rigid time requirements.",
     }
 
@@ -155,16 +173,36 @@ def submit_role_task(
     task.feedback = "Exemplary solution with comprehensive data validation and clean code structure."
     task.completed_at = utcnow()
 
+    # If task has a skill_id, register or update project-verified evidence
+    if task.skill_id:
+        existing_ev = db.query(SkillEvidence).filter(
+            SkillEvidence.user_id == current_user.id,
+            SkillEvidence.skill_id == task.skill_id,
+            SkillEvidence.evidence_type == EvidenceType.PROJECT,
+        ).first()
+        if not existing_ev:
+            db.add(SkillEvidence(
+                user_id=current_user.id,
+                skill_id=task.skill_id,
+                evidence_type=EvidenceType.PROJECT,
+                level=SkillLevel.INTERMEDIATE,
+                confidence_score=0.90,
+                confidence_explanation=f"Demonstrated in practical role task: {task.title}",
+                source_description=f"Task submission: {task.submission_url or 'Solution verified'}",
+                verified_at=utcnow(),
+            ))
+
     db.add(AuditLog(
         user_id=current_user.id,
         action="role_task.submitted",
-        details={"task_id": task.id, "submission_url": data.submission_url},
+        details={"task_id": task.id, "submission_url": task.submission_url},
     ))
     db.commit()
 
     return {
         "message": "Task evaluated and passed successfully",
         "task_id": task.id,
+        "status": task.status,
         "score": task.score,
         "feedback": task.feedback,
     }

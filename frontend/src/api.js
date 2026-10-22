@@ -7,8 +7,9 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("growsphere_token");
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -83,8 +84,25 @@ export const getMentorDashboard = () => apiRequest("/dashboard/mentor");
 
 // ─── Skills, Evidence & Roadmap ───
 export const getSkills = () => apiRequest("/skills/");
+export const getCareerRoles = () => apiRequest("/skills/career-roles");
 export const getGapAnalysis = () => apiRequest("/skills/gap-analysis");
-export const getMyEvidence = () => apiRequest("/skills/my-evidence");
+export const getMyEvidence = () => apiRequest("/profiles/skills");
+export const addSelfReportedSkill = (skillId, level, sourceDescription) =>
+  apiRequest("/profiles/skills", {
+    method: "POST",
+    body: JSON.stringify({
+      skill_id: skillId,
+      level: level || "beginner",
+      source_description: sourceDescription || "Self-reported skill",
+    }),
+  });
+export const updateSkillEvidence = (evidenceId, payload) =>
+  apiRequest(`/profiles/skills/${evidenceId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+export const deleteSkillEvidence = (evidenceId) =>
+  apiRequest(`/profiles/skills/${evidenceId}`, { method: "DELETE" });
 export const addProjectEvidence = (skillId, projectTitle, projectUrl, proofText) =>
   apiRequest("/skills/evidence/add-project", {
     method: "POST",
@@ -99,6 +117,7 @@ export const getMarketEvidence = (params = "") =>
   apiRequest(`/skills/market-evidence${params ? `?${params}` : ""}`);
 export const getActiveRoadmap = () => apiRequest("/roadmap/active");
 export const generateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
+export const regenerateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
 
 // ─── Skill Passport ───
 export const getMyPassport = () => apiRequest("/passport/my");
@@ -208,6 +227,8 @@ export const saveOpportunity = (jobPostingId, notes) =>
     body: JSON.stringify({ notes }),
   });
 export const getSavedOpportunities = () => apiRequest("/jobs/saved/my");
+export const deleteSavedOpportunity = (savedId) =>
+  apiRequest(`/jobs/saved/${savedId}`, { method: "DELETE" });
 export const updateSavedApplicationStatus = (savedId, status, notes) =>
   apiRequest(`/jobs/saved/${savedId}/status`, {
     method: "PATCH",
@@ -251,12 +272,29 @@ export const updateStudentProfile = (data) =>
 export const getEmployeeProfile = () => apiRequest("/profiles/employee");
 export const updateEmployeeProfile = (data) =>
   apiRequest("/profiles/employee", { method: "PUT", body: JSON.stringify(data) });
+export const uploadResumeFile = (file, targetRole) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (targetRole) formData.append("target_role", targetRole);
+  return apiRequest("/profiles/resume/upload", {
+    method: "POST",
+    body: formData,
+  });
+};
+export const getMyResumes = () => apiRequest("/profiles/resume");
+export const deleteResume = (resumeId) =>
+  apiRequest(`/profiles/resume/${resumeId}`, { method: "DELETE" });
 export const extractResumeSkills = (text) =>
   apiRequest("/profiles/resume/extract", { method: "POST", body: JSON.stringify({ text }) });
 export const confirmResumeSkills = (confirmedSkills) =>
   apiRequest("/profiles/resume/confirm-skills", {
     method: "POST",
     body: JSON.stringify({ confirmed_skills: confirmedSkills }),
+  });
+export const analyzeResumeAts = (text, targetRole) =>
+  apiRequest("/profiles/resume/ats-analyze", {
+    method: "POST",
+    body: JSON.stringify({ text, target_role: targetRole }),
   });
 export const updatePrivacySettings = (settings) =>
   apiRequest("/profiles/privacy", { method: "PUT", body: JSON.stringify({ privacy_settings: settings }) });

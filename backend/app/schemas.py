@@ -55,10 +55,21 @@ class OnboardingData(BaseModel):
     target_role_id: Optional[int] = None
     education: Optional[str] = None
     college: Optional[str] = None
+    location: Optional[str] = None
+    graduation_year: Optional[int] = None
+    learning_time_hours_per_week: Optional[float] = None
+    preferred_languages: Optional[List[str]] = None
+    opportunity_preferences: Optional[List[str]] = None
+    initial_skills: Optional[List[int]] = None
     current_role: Optional[str] = None
     current_company: Optional[str] = None
     years_experience: Optional[float] = None
+    industry: Optional[str] = None
+    career_goal: Optional[str] = None
     goal_mode: Optional[str] = None
+    career_change_intent: Optional[str] = None
+    learning_schedule: Optional[str] = None
+    preferences: Optional[dict] = None
 
 
 # ─── Student Profile ─────────────────────────────────────────────────
@@ -67,6 +78,10 @@ class StudentProfileCreate(BaseModel):
     education: Optional[str] = None
     college: Optional[str] = None
     graduation_year: Optional[int] = None
+    location: Optional[str] = None
+    learning_time_hours_per_week: Optional[float] = None
+    preferred_languages: Optional[List[str]] = None
+    opportunity_preferences: Optional[List[str]] = None
     bio: Optional[str] = None
     github_url: Optional[str] = None
     portfolio_url: Optional[str] = None
@@ -87,8 +102,12 @@ class EmployeeProfileCreate(BaseModel):
     current_company: Optional[str] = None
     target_role_id: Optional[int] = None
     years_experience: Optional[float] = None
+    industry: Optional[str] = None
     career_goal: Optional[str] = None
     goal_mode: Optional[str] = Field(None, pattern="^(promotion|reskill|career_switch)$")
+    career_change_intent: Optional[str] = None
+    learning_schedule: Optional[str] = None
+    preferences: Optional[dict] = None
     bio: Optional[str] = None
 
 
@@ -99,11 +118,15 @@ class EmployeeProfileOut(BaseModel):
     current_company: Optional[str] = None
     target_role_id: Optional[int] = None
     years_experience: Optional[float] = None
+    industry: Optional[str] = None
+    career_goal: Optional[str] = None  # Returned to authenticated owner only; omitted when shared
     goal_mode: Optional[str] = None
+    career_change_intent: Optional[str] = None
+    learning_schedule: Optional[str] = None
+    preferences: Optional[dict] = None
     bio: Optional[str] = None
     created_at: datetime
     target_role_title: Optional[str] = None
-    # Note: career_goal is NEVER included in output — private by design
 
     model_config = {"from_attributes": True}
 
@@ -198,6 +221,8 @@ class RoadmapTopicOut(BaseModel):
     is_locked: bool
     assessment_id: Optional[int] = None
     recommended_resources: Optional[list] = None
+    estimated_hours: Optional[int] = None
+    prerequisites: List[str] = []
     completed_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
@@ -291,6 +316,20 @@ class ResumeOut(BaseModel):
 
 class ResumeConfirmSkills(BaseModel):
     confirmed_skills: List[str]
+
+
+class ResumeOut(BaseModel):
+    id: int
+    user_id: int
+    filename: str
+    file_size_bytes: Optional[int] = None
+    extracted_text_preview: Optional[str] = None
+    extracted_skills: Optional[list] = None
+    user_confirmed_skills: Optional[list] = None
+    processing_status: str
+    uploaded_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 # ─── Courses ──────────────────────────────────────────────────────────
@@ -420,6 +459,9 @@ class StudentDashboard(BaseModel):
     recent_attempts: List[AttemptOut] = []
     recommended_courses: List[CourseRecommendation] = []
     job_matches: List[JobMatchOut] = []
+    upcoming_sessions: List[BookingOut] = []
+    saved_opportunities: List[dict] = []
+    next_action: Optional[dict] = None
 
 
 class EmployeeDashboard(BaseModel):
@@ -430,6 +472,10 @@ class EmployeeDashboard(BaseModel):
     active_roadmap: Optional[RoadmapOut] = None
     recent_attempts: List[AttemptOut] = []
     recommended_courses: List[CourseRecommendation] = []
+    job_matches: List[JobMatchOut] = []
+    upcoming_sessions: List[BookingOut] = []
+    transferable_summary: Optional[dict] = None
+    next_action: Optional[dict] = None
 
 
 class SellerDashboard(BaseModel):
@@ -458,18 +504,7 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
-class EmailVerificationConfirm(BaseModel):
-    token: str
 
-
-class OnboardingData(BaseModel):
-    target_role_id: Optional[int] = None
-    education: Optional[str] = None
-    college: Optional[str] = None
-    current_role: Optional[str] = None
-    current_company: Optional[str] = None
-    years_experience: Optional[float] = None
-    goal_mode: Optional[str] = None
 
 
 class PrivacySettingsUpdate(BaseModel):

@@ -156,13 +156,21 @@ def _roadmap_to_out(roadmap: Roadmap, db: Session) -> RoadmapOut:
     role = db.query(CareerRole).filter(CareerRole.id == roadmap.career_role_id).first()
     topics = db.query(RoadmapTopic).filter(RoadmapTopic.roadmap_id == roadmap.id).order_by(RoadmapTopic.order).all()
 
+    deps = db.query(SkillDependency).all()
+    dep_map = {}
+    for d in deps:
+        dep_map.setdefault(d.skill_id, []).append(d.prerequisite_id)
+    all_skills = {s.id: s.canonical_name for s in db.query(Skill).all()}
+
     topic_outs = []
     for t in topics:
-        skill = db.query(Skill).filter(Skill.id == t.skill_id).first()
+        skill_name = all_skills.get(t.skill_id, "Unknown")
+        prereq_ids = dep_map.get(t.skill_id, [])
+        prereqs = [all_skills.get(pid, f"Skill #{pid}") for pid in prereq_ids]
         topic_outs.append(RoadmapTopicOut(
             id=t.id,
             skill_id=t.skill_id,
-            skill_name=skill.canonical_name if skill else "Unknown",
+            skill_name=skill_name,
             title=t.title,
             description=t.description,
             order=t.order,
@@ -170,6 +178,8 @@ def _roadmap_to_out(roadmap: Roadmap, db: Session) -> RoadmapOut:
             is_locked=t.is_locked,
             assessment_id=t.assessment_id,
             recommended_resources=t.recommended_resources,
+            estimated_hours=10,  # ~10 hours effort per topic
+            prerequisites=prereqs,
             completed_at=t.completed_at,
         ))
 

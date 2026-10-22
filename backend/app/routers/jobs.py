@@ -5,7 +5,7 @@ Jobs & Opportunities router — market postings, internships, hackathons, and sk
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
@@ -267,5 +267,31 @@ def update_saved_opportunity_status(
         "status": saved.status,
         "notes": saved.notes,
     }
+
+
+@router.delete("/saved/{saved_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_saved_opportunity(
+    saved_id: int,
+    current_user: User = Depends(require_learner),
+    db: Session = Depends(get_db),
+):
+    """Remove a saved opportunity from tracker."""
+    from app.models import SavedOpportunity, AuditLog
+
+    saved = (
+        db.query(SavedOpportunity)
+        .filter(SavedOpportunity.id == saved_id, SavedOpportunity.user_id == current_user.id)
+        .first()
+    )
+    if not saved:
+        raise HTTPException(status_code=404, detail="Saved opportunity not found")
+
+    db.delete(saved)
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="opportunity.unsaved",
+        details={"saved_id": saved_id},
+    ))
+    db.commit()
 
 

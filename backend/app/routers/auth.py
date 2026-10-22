@@ -206,27 +206,88 @@ def complete_onboarding(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Save role-specific onboarding setup."""
-    if current_user.role == UserRole.STUDENT and current_user.student_profile:
-        if data.target_role_id:
-            current_user.student_profile.target_role_id = data.target_role_id
-        if data.education:
-            current_user.student_profile.education = data.education
-        if data.college:
-            current_user.student_profile.college = data.college
-    elif current_user.role == UserRole.EMPLOYEE and current_user.employee_profile:
-        if data.target_role_id:
-            current_user.employee_profile.target_role_id = data.target_role_id
-        if data.current_role:
-            current_user.employee_profile.current_role = data.current_role
-        if data.current_company:
-            current_user.employee_profile.current_company = data.current_company
-        if data.years_experience is not None:
-            current_user.employee_profile.years_experience = data.years_experience
-        if data.goal_mode:
-            current_user.employee_profile.goal_mode = data.goal_mode
+    """Save role-specific onboarding setup and initial self-reported skills."""
+    from app.models import Skill, SkillEvidence, EvidenceType, SkillLevel, utcnow
 
-    db.add(AuditLog(user_id=current_user.id, action="user.onboarding_updated"))
+    if current_user.role == UserRole.STUDENT:
+        prof = current_user.student_profile
+        if not prof:
+            prof = StudentProfile(user_id=current_user.id)
+            db.add(prof)
+
+        if data.target_role_id:
+            prof.target_role_id = data.target_role_id
+        if data.education:
+            prof.education = data.education
+        if data.college:
+            prof.college = data.college
+        if data.location:
+            prof.location = data.location
+        if data.graduation_year:
+            prof.graduation_year = data.graduation_year
+        if data.learning_time_hours_per_week:
+            prof.learning_time_hours_per_week = data.learning_time_hours_per_week
+        if data.preferred_languages:
+            prof.preferred_languages = data.preferred_languages
+        if data.opportunity_preferences:
+            prof.opportunity_preferences = data.opportunity_preferences
+        prof.updated_at = utcnow()
+
+    elif current_user.role == UserRole.EMPLOYEE:
+        prof = current_user.employee_profile
+        if not prof:
+            prof = EmployeeProfile(user_id=current_user.id)
+            db.add(prof)
+
+        if data.target_role_id:
+            prof.target_role_id = data.target_role_id
+        if data.current_role:
+            prof.current_role = data.current_role
+        if data.current_company:
+            prof.current_company = data.current_company
+        if data.years_experience is not None:
+            prof.years_experience = data.years_experience
+        if data.industry:
+            prof.industry = data.industry
+        if data.career_goal:
+            prof.career_goal = data.career_goal  # Private
+        if data.goal_mode:
+            prof.goal_mode = data.goal_mode
+        if data.career_change_intent:
+            prof.career_change_intent = data.career_change_intent
+        if data.learning_schedule:
+            prof.learning_schedule = data.learning_schedule
+        if data.preferences:
+            prof.preferences = data.preferences
+        prof.updated_at = utcnow()
+
+    # Record any initial self-reported skills selected during onboarding
+    if data.initial_skills:
+        for sid in data.initial_skills:
+            skill = db.query(Skill).filter(Skill.id == sid).first()
+            if not skill:
+                continue
+            exists = db.query(SkillEvidence).filter(
+                SkillEvidence.user_id == current_user.id,
+                SkillEvidence.skill_id == sid,
+            ).first()
+            if not exists:
+                ev = SkillEvidence(
+                    user_id=current_user.id,
+                    skill_id=sid,
+                    evidence_type=EvidenceType.SELF_REPORTED,
+                    level=SkillLevel.BEGINNER,
+                    confidence_score=0.5,
+                    confidence_explanation="Self-reported during onboarding wizard. Practical assessment required to verify.",
+                    source_description="Onboarding self-report",
+                )
+                db.add(ev)
+
+    db.add(AuditLog(
+        user_id=current_user.id,
+        action="user.onboarding_completed",
+        details={"role": current_user.role.value, "target_role_id": data.target_role_id},
+    ))
     db.commit()
     return {"message": "Onboarding completed successfully"}
 

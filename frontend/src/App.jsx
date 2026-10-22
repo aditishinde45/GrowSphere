@@ -3,13 +3,20 @@ import * as api from "./api";
 import LandingPage from "./LandingPage";
 import AuthModal from "./AuthModal";
 import {
+  EditStudentProfileModal,
+  EditEmployeeProfileModal,
+  AddSelfSkillModal,
+  EditEvidenceModal,
+} from "./ProfileModals";
+import {
   Compass, CheckCircle2, AlertTriangle, BookOpen, Briefcase,
   UserCheck, Shield, ChevronRight, Lock, Unlock, PlayCircle,
   FileText, Award, RefreshCw, Sparkles, HelpCircle, Layers,
   ExternalLink, Calendar, Star, Check, CreditCard, Wallet,
   Send, Share2, Trash2, Download, Eye, EyeOff, Clock, Video,
   UserPlus, PlusCircle, CheckSquare, XCircle, Activity, FileCheck,
-  TrendingUp, Users, DollarSign, Settings, LogOut, Sun, Moon
+  TrendingUp, Users, DollarSign, Settings, LogOut, Sun, Moon,
+  UploadCloud, Filter, Edit2, GraduationCap, ArrowRight
 } from "lucide-react";
 
 // Pre-seeded role demo credentials for instant 1-click role testing in dev sandbox
@@ -51,17 +58,20 @@ export default function App() {
 
   // Active subtabs per role
   const [studentTab, setStudentTab] = useState("roadmap"); // roadmap | evidence | resume | mock_interview | jobs | courses
-  const [employeeTab, setEmployeeTab] = useState("upskilling"); // upskilling | transition | executive_mentors
+  const [employeeTab, setEmployeeTab] = useState("dashboard"); // dashboard | transition | roadmap | evidence | resume | jobs | mentors
   const [sellerTab, setSellerTab] = useState("courses"); // courses | ledger | reviews
   const [mentorTab, setMentorTab] = useState("bookings"); // bookings | availability | endorsements
   const [adminTab, setAdminTab] = useState("moderation"); // moderation | users | reports | metrics | governance
 
-  // ─── Student State ───
+  // ─── Student & Profile State ───
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [careerRoles, setCareerRoles] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [gapData, setGapData] = useState(null);
   const [roadmapData, setRoadmapData] = useState(null);
   const [marketEvidence, setMarketEvidence] = useState(null);
   const [myEvidence, setMyEvidence] = useState([]);
+  const [evidenceFilter, setEvidenceFilter] = useState("all");
   const [passport, setPassport] = useState(null);
   const [courses, setCourses] = useState([]);
   const [jobMatches, setJobMatches] = useState([]);
@@ -69,6 +79,14 @@ export default function App() {
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [mentorsList, setMentorsList] = useState([]);
+  const [mentorShareConsent, setMentorShareConsent] = useState(true);
+
+  // Profile and Evidence Modals
+  const [editStudentModalOpen, setEditStudentModalOpen] = useState(false);
+  const [editEmployeeModalOpen, setEditEmployeeModalOpen] = useState(false);
+  const [addSelfSkillModalOpen, setAddSelfSkillModalOpen] = useState(false);
+  const [editEvidenceModalOpen, setEditEvidenceModalOpen] = useState(false);
+  const [selectedEvidenceForEdit, setSelectedEvidenceForEdit] = useState(null);
 
   // Assessment Quiz Modal
   const [quizModalOpen, setQuizModalOpen] = useState(false);
@@ -85,7 +103,12 @@ export default function App() {
 
   // ATS Resume State
   const [resumeText, setResumeText] = useState("");
+  const [resumeFile, setResumeFile] = useState(null);
+  const [selectedResumeTargetRole, setSelectedResumeTargetRole] = useState("");
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadedResumes, setUploadedResumes] = useState([]);
   const [extractedSkills, setExtractedSkills] = useState([]);
+  const [candidateConfirmedSkills, setCandidateConfirmedSkills] = useState({});
   const [atsSuggestions, setAtsSuggestions] = useState([]);
   const [extractingResume, setExtractingResume] = useState(false);
 
@@ -222,28 +245,33 @@ export default function App() {
   // ─── Student Loader ───
   const loadStudentView = async () => {
     try {
-      const [dash, gap, road, recCourses, recJobs, evidence, mEvidence, myPass, allSk, saved, enrolls, bookings, mentors] =
-        await Promise.all([
-          api.getStudentDashboard().catch(() => null),
-          api.getGapAnalysis().catch(() => null),
-          api.getActiveRoadmap().catch(() => null),
-          api.getRecommendedCourses().catch(() => []),
-          api.getJobMatches().catch(() => []),
-          api.getMyEvidence().catch(() => []),
-          api.getMarketEvidence("role_title=Data Analyst").catch(() => null),
-          api.getMyPassport().catch(() => null),
-          api.getSkills().catch(() => []),
-          api.getSavedOpportunities().catch(() => []),
-          api.getMyEnrollments().catch(() => []),
-          api.getMyBookings().catch(() => []),
-          api.getMentors().catch(() => []),
-        ]);
+      const [
+        dash, gap, road, recCourses, recJobs, evidence, mEvidence, myPass,
+        allSk, saved, enrolls, bookings, mentors, sProf, roles, myResumes
+      ] = await Promise.all([
+        api.getStudentDashboard().catch(() => null),
+        api.getGapAnalysis().catch(() => null),
+        api.getActiveRoadmap().catch(() => null),
+        api.getRecommendedCourses().catch(() => []),
+        api.getJobMatches().catch(() => []),
+        api.getMyEvidence().catch(() => []),
+        api.getMarketEvidence("role_title=Data Analyst").catch(() => null),
+        api.getMyPassport().catch(() => null),
+        api.getSkills().catch(() => []),
+        api.getSavedOpportunities().catch(() => []),
+        api.getMyEnrollments().catch(() => []),
+        api.getMyBookings().catch(() => []),
+        api.getMentors().catch(() => []),
+        api.getStudentProfile().catch(() => null),
+        api.getCareerRoles().catch(() => []),
+        api.getMyResumes().catch(() => []),
+      ]);
       setDashboardData(dash);
       setGapData(gap);
       setRoadmapData(road);
       setCourses(recCourses);
       setJobMatches(recJobs);
-      setMyEvidence(evidence);
+      setMyEvidence(Array.isArray(evidence) ? evidence : []);
       setMarketEvidence(mEvidence);
       setPassport(myPass);
       setAllSkills(allSk);
@@ -251,6 +279,9 @@ export default function App() {
       setMyEnrollments(enrolls);
       setMyBookings(bookings);
       setMentorsList(mentors);
+      setStudentProfile(sProf);
+      setCareerRoles(roles);
+      setUploadedResumes(myResumes);
     } catch (e) {
       console.error("Student load error:", e);
     }
@@ -259,24 +290,49 @@ export default function App() {
   // ─── Employee Loader ───
   const loadEmployeeView = async () => {
     try {
-      const [dash, gap, road, empProf, trans, allSk] = await Promise.all([
+      const [
+        dash, gap, road, empProf, allSk, evidence, enrolls,
+        bookings, mentors, saved, roles, myResumes, recJobs, recCourses
+      ] = await Promise.all([
         api.getEmployeeDashboard().catch(() => null),
         api.getGapAnalysis().catch(() => null),
         api.getActiveRoadmap().catch(() => null),
         api.getEmployeeProfile().catch(() => null),
-        api.analyzeCareerTransition("Operations Analyst", "Senior Data Analyst").catch(() => null),
         api.getSkills().catch(() => []),
+        api.getMyEvidence().catch(() => []),
+        api.getMyEnrollments().catch(() => []),
+        api.getMyBookings().catch(() => []),
+        api.getMentors().catch(() => []),
+        api.getSavedOpportunities().catch(() => []),
+        api.getCareerRoles().catch(() => []),
+        api.getMyResumes().catch(() => []),
+        api.getJobMatches().catch(() => []),
+        api.getRecommendedCourses().catch(() => []),
       ]);
       setDashboardData(dash);
       setGapData(gap);
       setRoadmapData(road);
       setEmployeeProfile(empProf);
-      setTransitionAnalysis(trans);
       setAllSkills(allSk);
+      setMyEvidence(Array.isArray(evidence) ? evidence : []);
+      setMyEnrollments(enrolls);
+      setMyBookings(bookings);
+      setMentorsList(mentors);
+      setSavedJobs(saved);
+      setCareerRoles(roles);
+      setUploadedResumes(myResumes);
+      setJobMatches(recJobs);
+      setCourses(recCourses);
       if (empProf?.goal_mode) setGoalMode(empProf.goal_mode);
 
-      // fetch role tasks
-      const tasks = await api.getRoleTasks(1).catch(() => []);
+      // Dynamically run transition analysis using employee's actual role and target
+      const curRole = empProf?.current_role || "Operations Analyst";
+      const tgtRoleId = empProf?.target_role_id || 2;
+      const trans = await api.analyzeCareerTransition(curRole, tgtRoleId).catch(() => null);
+      setTransitionAnalysis(trans);
+
+      // Fetch role tasks for employee's target role
+      const tasks = await api.getRoleTasks(tgtRoleId).catch(() => []);
       setRoleTasks(tasks);
     } catch (e) {
       console.error("Employee load error:", e);
@@ -417,15 +473,19 @@ export default function App() {
     }
   };
 
-  // ─── ATS Resume Analyzer ───
+  // ─── ATS Resume Analyzer & Upload ───
   const handleExtractResumeSkills = async () => {
     if (!resumeText.trim()) return;
     setExtractingResume(true);
     try {
       const res = await api.extractResumeSkills(resumeText);
-      setExtractedSkills(res.extracted_skills || []);
+      const skills = res.extracted_skills || [];
+      setExtractedSkills(skills);
+      const initialMap = {};
+      skills.forEach((sk) => { initialMap[sk.skill] = true; });
+      setCandidateConfirmedSkills(initialMap);
       setAtsSuggestions(res.ats_recommendations || []);
-      showNotification(`Extracted ${res.extracted_skills?.length || 0} candidate skills for your review.`);
+      showNotification(`Extracted ${skills.length} candidate skills for your review.`);
     } catch (err) {
       alert("Resume extraction failed: " + err.message);
     } finally {
@@ -433,19 +493,127 @@ export default function App() {
     }
   };
 
-  const handleConfirmResumeSkills = async () => {
-    if (!extractedSkills.length) return;
+  const handleUploadResumeFile = async (e) => {
+    const file = e?.target?.files?.[0] || resumeFile;
+    if (!file) {
+      alert("Please choose a PDF, DOCX, or TXT file to upload.");
+      return;
+    }
+    setUploadingResume(true);
+    try {
+      const tgt = selectedResumeTargetRole || (dashboardData?.target_role?.title) || "Data Analyst";
+      const res = await api.uploadResumeFile(file, tgt);
+      showNotification(`Extracted ${res.extracted_skills?.length || 0} candidate skills from ${res.filename}!`);
+      const skills = res.extracted_skills || [];
+      setExtractedSkills(skills);
+      const initialMap = {};
+      skills.forEach((sk) => { initialMap[sk.skill] = true; });
+      setCandidateConfirmedSkills(initialMap);
+      setAtsSuggestions(res.ats_recommendations || []);
+      const myResumes = await api.getMyResumes().catch(() => []);
+      setUploadedResumes(myResumes);
+    } catch (err) {
+      alert("Resume upload failed: " + err.message);
+    } finally {
+      setUploadingResume(false);
+      setResumeFile(null);
+    }
+  };
+
+  const handleDeleteResume = async (resumeId) => {
+    if (!confirm("Are you sure you want to securely delete this resume from your profile storage?")) return;
     try {
       setActionLoading(true);
-      const skillNames = extractedSkills.map((s) => s.skill);
-      await api.confirmResumeSkills(skillNames);
-      showNotification("Confirmed skills committed to your profile with verified resume evidence tier!");
+      await api.deleteResume(resumeId);
+      showNotification("Resume securely deleted from storage.");
+      const myResumes = await api.getMyResumes().catch(() => []);
+      setUploadedResumes(myResumes);
+    } catch (err) {
+      alert("Failed to delete resume: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmResumeSkills = async () => {
+    const checkedSkills = extractedSkills
+      .filter((s) => candidateConfirmedSkills[s.skill] !== false)
+      .map((s) => s.skill);
+
+    if (!checkedSkills.length) {
+      alert("Please select at least one skill checkbox to confirm.");
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await api.confirmResumeSkills(checkedSkills);
+      showNotification(`Confirmed ${checkedSkills.length} skills committed to your profile with verified resume evidence tier!`);
       if (activeRole === "student") await loadStudentView();
       else await loadEmployeeView();
     } catch (err) {
       alert("Confirmation error: " + err.message);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDeleteEvidence = async (evidenceId) => {
+    if (!confirm("Are you sure you want to remove this skill evidence from your profile?")) return;
+    try {
+      setActionLoading(true);
+      await api.deleteSkillEvidence(evidenceId);
+      showNotification("Skill evidence removed from profile.");
+      if (activeRole === "student") await loadStudentView();
+      else await loadEmployeeView();
+    } catch (err) {
+      alert("Failed to remove evidence: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteSavedOpportunity = async (savedId) => {
+    try {
+      await api.deleteSavedOpportunity(savedId);
+      showNotification("Opportunity removed from your tracker.");
+      const saved = await api.getSavedOpportunities();
+      setSavedJobs(saved);
+    } catch (err) {
+      alert("Failed to remove opportunity: " + err.message);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!confirm("Are you sure you want to cancel this scheduled mentorship session?")) return;
+    try {
+      setActionLoading(true);
+      await api.updateBookingStatus(bookingId, "cancelled", "Cancelled by user");
+      showNotification("Mentorship session cancelled.");
+      if (activeRole === "student") await loadStudentView();
+      else await loadEmployeeView();
+    } catch (err) {
+      alert("Failed to cancel session: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTriggerNextAction = (action) => {
+    if (!action) return;
+    if (action.type === "profile") {
+      if (activeRole === "student") setEditStudentModalOpen(true);
+      else setEditEmployeeModalOpen(true);
+    } else if (action.type === "learn" && action.assessment_id) {
+      openQuiz(action.assessment_id);
+    } else if (action.type === "upskill" || action.type === "task") {
+      if (activeRole === "employee") setEmployeeTab("transition");
+      else setStudentTab("roadmap");
+    } else if (action.type === "mentors") {
+      if (activeRole === "employee") setEmployeeTab("mentors");
+      else setStudentTab("courses");
+    } else {
+      if (activeRole === "student") setStudentTab("roadmap");
+      else setEmployeeTab("dashboard");
     }
   };
 
@@ -602,11 +770,13 @@ export default function App() {
     try {
       setActionLoading(true);
       const nextWeek = new Date(Date.now() + 86400000 * 3).toISOString();
-      await api.bookSession(bookingOffering.id, nextWeek, bookingNotes || "Career advice session");
+      const notesWithConsent = `${bookingNotes}${mentorShareConsent ? " [Consent granted: Share verified skill profile & roadmap for session preparation]" : " [Evidence sharing declined]"}`;
+      await api.bookSession(bookingOffering.id, nextWeek, notesWithConsent);
       showNotification("Mentorship session confirmed! Sandbox meeting link generated.");
       setBookingModalOpen(false);
       setBookingOffering(null);
-      await loadStudentView();
+      if (activeRole === "student") await loadStudentView();
+      else await loadEmployeeView();
     } catch (err) {
       alert("Booking error: " + err.message);
     } finally {
@@ -997,6 +1167,60 @@ export default function App() {
         {activeRole === "student" && (
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Student Subtab Bar */}
+            {/* Student Personal Profile & Goal Hero Header */}
+            <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span className="badge badge-verified">STUDENT LEARNER WORKSPACE</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 4 }}>
+                    <GraduationCap size={14} /> {studentProfile?.education || "Undergraduate / Graduate"}
+                  </span>
+                </div>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", margin: "4px 0" }}>
+                  {user?.full_name || "Student Learner"}
+                </h1>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0" }}>
+                  Institution: <strong style={{ color: "#fff" }}>{studentProfile?.college || "College / University not set"}</strong> · Location: <strong>{studentProfile?.location || "Not specified"}</strong> · Class of <strong>{studentProfile?.graduation_year || 2025}</strong>
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 4 }}>
+                    ⏱️ Study Pace: {studentProfile?.learning_time_hours_per_week || 10} hrs/week
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 4 }}>
+                    🌐 Languages: {studentProfile?.preferred_languages || "English"}
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 4 }}>
+                    💼 Seeking: {studentProfile?.opportunity_preferences || "Full-time, Internship"}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setEditStudentModalOpen(true)} className="btn btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Edit2 size={14} /> Edit Profile & Goals
+              </button>
+            </div>
+
+            {/* Next Recommended Career Action Card */}
+            {dashboardData?.next_action && (
+              <div style={{ padding: "16px 20px", borderRadius: 12, background: "linear-gradient(90deg, rgba(99,102,241,0.15) 0%, rgba(16,185,129,0.1) 100%)", border: "1px solid rgba(99,102,241,0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span className="badge badge-verified" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>RECOMMENDED NEXT ACTION</span>
+                      <span style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{dashboardData.next_action.title}</span>
+                    </div>
+                    <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: 2 }}>{dashboardData.next_action.description}</div>
+                  </div>
+                </div>
+                <button onClick={() => handleTriggerNextAction(dashboardData.next_action)} className="btn btn-primary" style={{ padding: "8px 16px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 6 }}>
+                  {dashboardData.next_action.cta} <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Subtab Bar */}
             <div className="subtab-bar">
               <button className={`subtab-btn ${studentTab === "roadmap" ? "active" : ""}`} onClick={() => setStudentTab("roadmap")}>
                 <Compass size={16} /> Roadmap & Adaptive Learning
@@ -1032,11 +1256,11 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                    <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#ffffff" }}>
-                      {dashboardData?.target_role?.title || "Data Analyst"}
-                    </h1>
+                    <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#ffffff", margin: "4px 0" }}>
+                      {dashboardData?.target_role?.title || studentProfile?.target_role_title || "Target Role Not Set"}
+                    </h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: 640, marginTop: 4 }}>
-                      {dashboardData?.target_role?.description || "Extracts, cleans, analyzes, and visualizes data to help organizations make strategic decisions."}
+                      {dashboardData?.target_role?.description || "Select your target role to calibrate real-time skill gaps, market demand, and adaptive roadmap."}
                     </p>
                     {marketEvidence?.limitations && (
                       <div style={{ marginTop: 8, fontSize: "0.7rem", color: "var(--text-muted)" }}>
@@ -1053,7 +1277,7 @@ export default function App() {
                         {gapData ? `${Math.round(gapData.readiness_score * 100)}%` : "0%"}
                       </div>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                        {gapData ? `${gapData.verified_count} verified · ${gapData.self_reported_count} self-reported · ${gapData.gap_count} gaps` : ""}
+                        {gapData ? `${gapData.verified_count} verified · ${gapData.self_reported_count} self-reported · ${gapData.gap_count} gaps` : "Configure target role"}
                       </div>
                     </div>
                     <button onClick={async () => { await api.generateRoadmap(); await loadStudentView(); showNotification("Roadmap regenerated based on current evidence!"); }} className="btn btn-primary">
@@ -1183,37 +1407,118 @@ export default function App() {
 
                 {/* 5-Tier Evidence Breakdown Card */}
                 <div className="glass-panel" style={{ padding: 24 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
                     <div>
-                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>5-Tier Objective Evidence Model</h3>
-                      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                        Clearly separates self-reported, resume-extracted, assessment-verified, project-verified, and mentor-endorsed proof.
+                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700 }}>5-Tier Objective Evidence Portfolio</h3>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2 }}>
+                        Distinguishes self-reported, resume-extracted, assessment-verified, project-verified, and mentor-endorsed proof.
                       </p>
                     </div>
-                    <button onClick={() => setProjectModalOpen(true)} className="btn btn-accent">
-                      <PlusCircle size={15} /> Submit Project Proof
-                    </button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button onClick={() => setAddSelfSkillModalOpen(true)} className="btn btn-secondary" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <PlusCircle size={15} /> Add Self-Reported Skill
+                      </button>
+                      <button onClick={() => setProjectModalOpen(true)} className="btn btn-accent" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <PlusCircle size={15} /> Submit Project Proof
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
-                    {myEvidence.map((ev, i) => (
-                      <div key={i} style={{ padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{ev.skill?.canonical_name || `Skill #${ev.skill_id}`}</div>
-                          <span className={`badge badge-${ev.evidence_type === 'mentor_endorsed' ? 'verified' : ev.evidence_type === 'assessed' ? 'verified' : ev.evidence_type === 'project' ? 'synthetic' : ev.evidence_type === 'resume_extracted' ? 'self-reported' : 'self-reported'}`}>
-                            {ev.evidence_type.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 8 }}>
-                          {ev.proof_summary || "Demonstrated in platform curriculum"}
-                        </div>
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                          <span>Confidence: <strong>{Math.round(ev.confidence_score * 100)}%</strong></span>
-                          <span>Verified: {ev.verified_at ? new Date(ev.verified_at).toLocaleDateString() : "Pending"}</span>
-                        </div>
-                      </div>
+                  {/* Tier Filter Tabs */}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                    {[
+                      { key: "all", label: `All (${myEvidence.length})` },
+                      { key: "verified", label: `Verified (${myEvidence.filter(e => ["assessed", "project", "mentor_endorsed"].includes((e.evidence_type || "").toLowerCase())).length})` },
+                      { key: "resume_extracted", label: `Resume (${myEvidence.filter(e => (e.evidence_type || "").toLowerCase() === "resume_extracted").length})` },
+                      { key: "self_reported", label: `Self-Reported (${myEvidence.filter(e => (e.evidence_type || "").toLowerCase() === "self_reported").length})` },
+                    ].map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setEvidenceFilter(tab.key)}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          border: "1px solid var(--border-subtle)",
+                          background: evidenceFilter === tab.key ? "var(--primary)" : "rgba(255,255,255,0.03)",
+                          color: evidenceFilter === tab.key ? "#fff" : "var(--text-secondary)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {tab.label}
+                      </button>
                     ))}
                   </div>
+
+                  {(() => {
+                    const filtered = myEvidence.filter((ev) => {
+                      const et = (ev.evidence_type || "").toLowerCase();
+                      if (evidenceFilter === "verified") return ["assessed", "project", "mentor_endorsed"].includes(et);
+                      if (evidenceFilter === "resume_extracted" || evidenceFilter === "resume") return et === "resume_extracted";
+                      if (evidenceFilter === "self_reported" || evidenceFilter === "self") return et === "self_reported";
+                      return true;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", background: "rgba(255,255,255,0.01)", borderRadius: 10, border: "1px dashed var(--border-subtle)" }}>
+                          No evidence items recorded in this tier. Click <strong>"Add Self-Reported Skill"</strong> or take an assessment to register evidence.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+                        {filtered.map((ev) => {
+                          const et = (ev.evidence_type || "self_reported").toLowerCase();
+                          return (
+                            <div key={ev.id} style={{ padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                              <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                                  <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>
+                                    {ev.skill?.canonical_name || ev.skill_name || `Skill #${ev.skill_id}`}
+                                  </div>
+                                  <span className={`badge badge-${['mentor_endorsed', 'assessed', 'project'].includes(et) ? 'verified' : et === 'resume_extracted' ? 'synthetic' : 'self-reported'}`}>
+                                    {et.replace(/_/g, ' ').toUpperCase()}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 8 }}>
+                                  {ev.source_description || ev.proof_summary || "Demonstrated in platform curriculum"}
+                                </div>
+                              </div>
+
+                              <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                  Conf: <strong style={{ color: "var(--accent-cyan)" }}>{Math.round((ev.confidence_score || 0.8) * 100)}%</strong> · Level: <span style={{ textTransform: "capitalize", color: "#fff" }}>{ev.level || "intermediate"}</span>
+                                </div>
+                                {et !== "assessed" && (
+                                  <div style={{ display: "flex", gap: 6 }}>
+                                    <button
+                                      onClick={() => { setSelectedEvidenceForEdit(ev); setEditEvidenceModalOpen(true); }}
+                                      className="btn btn-secondary"
+                                      style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                                      title="Edit proficiency level or notes"
+                                    >
+                                      <Edit2 size={12} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteEvidence(ev.id)}
+                                      className="btn btn-danger"
+                                      style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                                      title="Remove evidence"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -1233,51 +1538,125 @@ export default function App() {
                   </div>
                 </div>
 
-                <textarea
-                  className="input-field"
-                  rows={5}
-                  value={resumeText}
-                  onChange={(e) => setResumeText(e.target.value)}
-                  placeholder="Paste resume work experience, project descriptions, or technical competencies... (e.g. Developed SQL pipeline processing 1M events daily with Python and Tableau)"
-                />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+                  {/* File Upload Box */}
+                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px dashed var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                      <UploadCloud size={18} color="var(--accent-cyan)" /> Upload Resume File (PDF, DOCX, TXT)
+                    </div>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      Secure document parsing. Extracted text is analyzed against your target role for skill matches and readability.
+                    </p>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={handleUploadResumeFile}
+                      disabled={uploadingResume}
+                      style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}
+                    />
+                    {uploadingResume && <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>Parsing document and extracting candidate skills...</span>}
+                  </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                  <button onClick={handleExtractResumeSkills} disabled={extractingResume || !resumeText.trim()} className="btn btn-primary">
-                    {extractingResume ? "Scanning..." : "Scan & Extract Skills"}
-                  </button>
-
-                  {extractedSkills.length > 0 && (
-                    <button onClick={handleConfirmResumeSkills} disabled={actionLoading} className="btn btn-accent">
-                      <CheckCircle2 size={16} /> Confirm & Commit {extractedSkills.length} Skills to Profile
-                    </button>
-                  )}
+                  {/* Manual Paste Box */}
+                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                      <FileText size={18} color="var(--accent-emerald)" /> Or Paste Resume / Experience Text
+                    </div>
+                    <textarea
+                      className="input-field"
+                      rows={3}
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      placeholder="Paste work experience, project descriptions, or technical competencies..."
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button onClick={handleExtractResumeSkills} disabled={extractingResume || !resumeText.trim()} className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>
+                        {extractingResume ? "Scanning..." : "Scan Pasted Text"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Candidate Skills Extracted Review & Confirmation */}
                 {extractedSkills.length > 0 && (
-                  <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-                    <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
-                      Candidate Skills Extracted (Review required):
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {extractedSkills.map((sk, i) => (
-                        <div key={i} style={{ padding: "8px 14px", borderRadius: 8, background: "rgba(99, 102, 241, 0.15)", border: "1px solid rgba(99, 102, 241, 0.3)", display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem" }}>
-                          <span style={{ fontWeight: 700, color: "#fff" }}>{sk.skill}</span>
-                          <span style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>({Math.round((sk.confidence || 0.8) * 100)}% conf)</span>
-                          <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>matched: "{sk.matched_span}"</span>
-                        </div>
-                      ))}
+                  <div style={{ marginTop: 8, padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.25)", display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                      <div>
+                        <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                          Candidate Skills Extracted ({extractedSkills.length}) - Review & Confirm:
+                        </h4>
+                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                          Uncheck any skill that was extracted incorrectly or out of context. Only checked skills will enter your Tier 2 Resume-Extracted profile.
+                        </p>
+                      </div>
+                      <button onClick={handleConfirmResumeSkills} disabled={actionLoading} className="btn btn-accent" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
+                        <CheckCircle2 size={16} /> Confirm Checked Skills to Profile
+                      </button>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
+                      {extractedSkills.map((sk, i) => {
+                        const isChecked = candidateConfirmedSkills[sk.skill] !== false;
+                        return (
+                          <label key={i} style={{ padding: "8px 12px", borderRadius: 8, background: isChecked ? "rgba(99, 102, 241, 0.18)" : "rgba(255,255,255,0.03)", border: `1px solid ${isChecked ? "rgba(99, 102, 241, 0.4)" : "var(--border-subtle)"}`, display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.85rem", cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => setCandidateConfirmedSkills({ ...candidateConfirmedSkills, [sk.skill]: e.target.checked })}
+                              style={{ marginTop: 3 }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: 700, color: "#fff" }}>{sk.skill}</div>
+                              <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>{Math.round((sk.confidence || 0.8) * 100)}% match confidence</div>
+                              {sk.matched_span && <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: 2 }}>matched: "{sk.matched_span}"</div>}
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
 
                     {atsSuggestions.length > 0 && (
-                      <div style={{ marginTop: 12, padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#fff", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
-                        <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
+                        <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
                           {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
                         </ul>
                       </div>
                     )}
                   </div>
                 )}
+
+                {/* Uploaded Resumes on File Management */}
+                <div style={{ marginTop: 8 }}>
+                  <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FileText size={16} color="var(--primary)" /> Resumes Stored in Profile ({uploadedResumes.length})
+                  </h4>
+                  {uploadedResumes.length === 0 ? (
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No resumes uploaded yet. Upload your PDF/DOCX to store evidence and generate role gap alignments.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {uploadedResumes.map((r) => (
+                        <div key={r.id} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{r.filename}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              Target Role: {r.target_role || "General"} · Uploaded: {new Date(r.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteResume(r.id)}
+                            disabled={actionLoading}
+                            className="btn btn-secondary"
+                            style={{ fontSize: "0.75rem", padding: "4px 10px", color: "#fda4af" }}
+                            title="Securely delete resume file"
+                          >
+                            <Trash2 size={13} /> Delete File
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1401,6 +1780,14 @@ export default function App() {
                               <option value="rejected">Rejected</option>
                             </select>
                             <span className="badge badge-verified">{item.status.toUpperCase()}</span>
+                            <button
+                              onClick={() => handleDeleteSavedOpportunity(item.id)}
+                              className="btn btn-secondary"
+                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "#fda4af" }}
+                              title="Remove opportunity from tracking"
+                            >
+                              ✕ Remove
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1509,6 +1896,47 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                {/* Scheduled Mentorship Sessions */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Calendar size={18} color="var(--primary)" /> My Scheduled Mentorship Sessions ({myBookings.length})
+                  </h3>
+
+                  {myBookings.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                      No sessions scheduled yet. Book a verified mentor above for 1-on-1 career guidance or code reviews.
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {myBookings.map((b) => (
+                        <div key={b.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              Scheduled: {new Date(b.scheduled_at).toLocaleString()} · Status: <span style={{ color: b.status === "confirmed" ? "var(--accent-emerald)" : "var(--accent-rose)", fontWeight: 600 }}>{b.status.toUpperCase()}</span>
+                            </div>
+                            {b.meeting_link && (
+                              <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)", marginTop: 4 }}>
+                                Video Room: <a href={b.meeting_link} target="_blank" rel="noreferrer" style={{ color: "var(--accent-cyan)", textDecoration: "underline" }}>{b.meeting_link}</a>
+                              </div>
+                            )}
+                          </div>
+                          {b.status !== "cancelled" && (
+                            <button
+                              onClick={() => handleCancelBooking(b.id)}
+                              disabled={actionLoading}
+                              className="btn btn-secondary"
+                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "#fda4af" }}
+                            >
+                              Cancel Session
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1521,32 +1949,83 @@ export default function App() {
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Employee Subtab Bar */}
             <div className="subtab-bar">
-              <button className={`subtab-btn ${employeeTab === "upskilling" ? "active" : ""}`} onClick={() => setEmployeeTab("upskilling")}>
-                <Compass size={16} /> Professional Upskilling & Goals
+              <button className={`subtab-btn ${employeeTab === "dashboard" ? "active" : ""}`} onClick={() => setEmployeeTab("dashboard")}>
+                <Compass size={16} /> Command Center & Goals
               </button>
               <button className={`subtab-btn ${employeeTab === "transition" ? "active" : ""}`} onClick={() => setEmployeeTab("transition")}>
-                <TrendingUp size={16} /> Transferable Skills & Career Transition
+                <TrendingUp size={16} /> Transferable Skills & Role Tasks
+              </button>
+              <button className={`subtab-btn ${employeeTab === "roadmap" ? "active" : ""}`} onClick={() => setEmployeeTab("roadmap")}>
+                <Layers size={16} /> Adaptive Roadmap
+              </button>
+              <button className={`subtab-btn ${employeeTab === "evidence" ? "active" : ""}`} onClick={() => setEmployeeTab("evidence")}>
+                <Award size={16} /> Evidence & Skill Passport
+              </button>
+              <button className={`subtab-btn ${employeeTab === "resume" ? "active" : ""}`} onClick={() => setEmployeeTab("resume")}>
+                <Sparkles size={16} /> Executive ATS Resume
+              </button>
+              <button className={`subtab-btn ${employeeTab === "jobs" ? "active" : ""}`} onClick={() => setEmployeeTab("jobs")}>
+                <Briefcase size={16} /> Opportunities Radar ({jobMatches.length})
+              </button>
+              <button className={`subtab-btn ${employeeTab === "mentors" ? "active" : ""}`} onClick={() => setEmployeeTab("mentors")}>
+                <Users size={16} /> Mentors & Advisory
               </button>
             </div>
 
-            {/* Subtab 1: Upskilling */}
-            {employeeTab === "upskilling" && (
+            {/* ════════ SUBTAB 1: COMMAND CENTER & PRIVATE GOALS ════════ */}
+            {employeeTab === "dashboard" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {/* Employee Profile Header */}
-                <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
                   <div>
-                    <span className="badge badge-verified" style={{ marginBottom: 6 }}>EMPLOYEE PROFESSIONAL</span>
-                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff" }}>
-                      Rahul Verma · Junior Operations Analyst
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <span className="badge badge-verified">EMPLOYEE PROFESSIONAL</span>
+                      <span className="badge badge-self-reported">VERIFIED ACCOUNT</span>
+                    </div>
+                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                      {user?.full_name || "Professional"}
                     </h1>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
-                      Current Organization: <strong>Wipro Tech</strong> · Experience: <strong>2.5 Years</strong>
-                    </p>
+                    <div style={{ fontSize: "1rem", color: "var(--accent-cyan)", fontWeight: 600, marginTop: 4 }}>
+                      {employeeProfile?.current_role || "Professional"} · {employeeProfile?.current_company || "Organization Not Specified"}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10, fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                      <span>Experience: <strong style={{ color: "#fff" }}>{employeeProfile?.years_experience || 0} Years</strong></span>
+                      <span>Industry: <strong style={{ color: "#fff" }}>{employeeProfile?.industry || "Technology & Operations"}</strong></span>
+                      <span>Target Role: <strong style={{ color: "var(--accent-emerald)" }}>{dashboardData?.target_role?.title || "Leadership Track"}</strong></span>
+                      <span>Schedule: <strong style={{ color: "#fff" }}>{employeeProfile?.learning_schedule || "Flexible"}</strong></span>
+                      <span>Intent: <strong style={{ color: "var(--accent-cyan)" }}>{employeeProfile?.career_change_intent || "Active Growth"}</strong></span>
+                    </div>
                   </div>
 
-                  {/* Goal Mode Selector */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>CAREER GOAL MODE:</div>
+                  <button
+                    onClick={() => setEditEmployeeModalOpen(true)}
+                    className="btn btn-secondary"
+                    style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Edit2 size={15} /> Edit Professional Profile & Goals
+                  </button>
+                </div>
+
+                {/* Private Career Goal Card */}
+                <div style={{ padding: 20, borderRadius: 12, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <Shield size={24} color="var(--primary)" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#fff", margin: 0 }}>Private Career Goal</h3>
+                        <span className="badge badge-verified" style={{ fontSize: "0.7rem" }}><Lock size={10} style={{ marginRight: 3 }} /> CONFIDENTIAL TO YOU</span>
+                      </div>
+                      <p style={{ fontSize: "0.9rem", color: "var(--accent-cyan)", margin: "4px 0 0 0", fontWeight: 500 }}>
+                        "{employeeProfile?.career_goal || "Upskilling toward Senior / Lead competencies and internal promotion"}"
+                      </p>
+                      <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "4px 0 0 0" }}>
+                        Strictly confidential: Protected by GrowSphere access isolation. Hidden from your employer ({employeeProfile?.current_company || "organization"}), course sellers, and public searches.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>MODE:</div>
                     <select
                       value={goalMode}
                       onChange={async (e) => {
@@ -1555,7 +2034,7 @@ export default function App() {
                         showNotification(`Career goal mode updated to ${e.target.value}!`);
                       }}
                       className="input-field"
-                      style={{ width: "auto" }}
+                      style={{ width: "auto", fontSize: "0.8rem", padding: "6px 10px" }}
                     >
                       <option value="promotion">Internal Promotion</option>
                       <option value="reskilling">Cross-Disciplinary Reskilling</option>
@@ -1564,35 +2043,135 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Upskilling Competency Matrix */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16 }}>
-                    Target Role Gap Breakdown: Senior Data Analyst / BI Lead
-                  </h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-                    {gapData?.skill_details?.map((item, idx) => (
-                      <div key={idx} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontWeight: 600, color: "#fff" }}>{item.skill.canonical_name}</div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Target Competency</div>
-                        </div>
-                        <span className={`badge badge-${item.status}`}>{item.status.toUpperCase()}</span>
+                {/* Recommended Next Career Action */}
+                {dashboardData?.next_action && (
+                  <div style={{ padding: 18, borderRadius: 12, background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <Sparkles size={22} color="var(--accent-emerald)" />
+                      <div>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-emerald)", textTransform: "uppercase" }}>Recommended Next Career Action</div>
+                        <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff" }}>{dashboardData.next_action.title}</div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{dashboardData.next_action.description}</div>
                       </div>
-                    ))}
+                    </div>
+                    <button
+                      onClick={() => handleTriggerNextAction(dashboardData.next_action)}
+                      className="btn btn-primary"
+                      style={{ fontSize: "0.85rem", padding: "8px 16px" }}
+                    >
+                      {dashboardData.next_action.action_label || "Execute Action"} <ArrowRight size={14} style={{ marginLeft: 6 }} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Professional Metrics Overview Row */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+                  <div className="glass-panel" style={{ padding: 18 }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Target Role Readiness</div>
+                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--accent-cyan)", marginTop: 4 }}>
+                      {Math.round((dashboardData?.readiness_score || 0) * 100)}%
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                      Target: {dashboardData?.target_role?.title || "Leadership Track"}
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: 18 }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Transferable Overlap</div>
+                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--accent-emerald)", marginTop: 4 }}>
+                      {Math.round((transitionAnalysis?.overlap_percentage || 0.6) * 100)}%
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                      Est. Effort: ~{transitionAnalysis?.estimated_effort_weeks || 8} Weeks
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: 18 }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Roadmap Completion</div>
+                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", marginTop: 4 }}>
+                      {roadmapData?.completed_topics || 0} / {roadmapData?.total_topics || 0}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                      Active Milestone Topics
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: 18 }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Verified Skills</div>
+                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--primary)", marginTop: 4 }}>
+                      {myEvidence.filter(e => e.evidence_type !== "SELF_REPORTED").length}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                      Across Tiers 2–5
+                    </div>
+                  </div>
+                </div>
+
+                {/* Two Columns: Skills Snapshot & Career Actions */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  {/* Left Column: Target Competencies & Transferable Skills */}
+                  <div className="glass-panel" style={{ padding: 20 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                        Target Competency Snapshot ({gapData?.skill_details?.length || 0})
+                      </h3>
+                      <button onClick={() => setEmployeeTab("transition")} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px" }}>
+                        View Full Matrix →
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {gapData?.skill_details?.slice(0, 5).map((item, idx) => (
+                        <div key={idx} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{item.skill.canonical_name}</div>
+                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Target Competency</div>
+                          </div>
+                          <span className={`badge badge-${item.status}`}>{item.status.toUpperCase()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Scheduled Advisory & Top Opportunities */}
+                  <div className="glass-panel" style={{ padding: 20 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                        Leadership Opportunities Radar ({jobMatches.length})
+                      </h3>
+                      <button onClick={() => setEmployeeTab("jobs")} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px" }}>
+                        View All →
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {jobMatches.slice(0, 3).map((jm, i) => (
+                        <div key={i} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{jm.job.title}</div>
+                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
+                          </div>
+                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
+                        </div>
+                      ))}
+                      {jobMatches.length === 0 && (
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>No matched opportunities currently loaded. Switch target role to explore openings.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Subtab 2: Career Transition */}
+            {/* ════════ SUBTAB 2: TRANSFERABLE SKILLS & ROLE TASKS ════════ */}
             {employeeTab === "transition" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {transitionAnalysis && (
                   <div className="glass-panel" style={{ padding: 24 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
                       <div>
-                        <span className="badge badge-verified" style={{ marginBottom: 6 }}>CAREER SWITCH ESTIMATION</span>
-                        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff" }}>
+                        <span className="badge badge-verified" style={{ marginBottom: 6 }}>CAREER SWITCH & PROMOTION ESTIMATION</span>
+                        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
                           {transitionAnalysis.current_role} → {transitionAnalysis.target_role}
                         </h2>
                       </div>
@@ -1602,27 +2181,60 @@ export default function App() {
                           {Math.round(transitionAnalysis.overlap_percentage * 100)}%
                         </div>
                         <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)" }}>
-                          Est. Effort: ~{transitionAnalysis.estimated_effort_weeks} Weeks
+                          Est. Effort: ~{transitionAnalysis.estimated_effort_weeks} Weeks (Estimate)
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    {/* Uncertainty Notice */}
+                    <div style={{ padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", fontSize: "0.78rem", color: "var(--text-muted)", marginBottom: 16 }}>
+                      <strong>Notice on Timeline Estimates:</strong> Effort estimates represent heuristic guidelines calculated from prerequisite topic complexity at an assumed 8-10 hours/week pace. Actual velocity varies by individual background and prior hands-on exposure.
+                    </div>
+
+                    {/* 3-Column Skills Matrix */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+                      {/* Column 1: Direct Transferable */}
                       <div style={{ padding: 16, borderRadius: 10, background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                        <div style={{ fontWeight: 700, color: "#34d399", marginBottom: 8 }}>Direct Transferable Skills:</div>
+                        <div style={{ fontWeight: 700, color: "#34d399", marginBottom: 8, fontSize: "0.9rem" }}>
+                          ✓ Direct Transferable Skills ({transitionAnalysis.transferable_skills?.length || 0}):
+                        </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {transitionAnalysis.transferable_skills?.map((s, i) => (
                             <span key={i} className="badge badge-verified">{s}</span>
                           ))}
+                          {(!transitionAnalysis.transferable_skills || transitionAnalysis.transferable_skills.length === 0) && (
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>None identified</span>
+                          )}
                         </div>
                       </div>
 
+                      {/* Column 2: Needs Stronger Evidence */}
+                      <div style={{ padding: 16, borderRadius: 10, background: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.2)" }}>
+                        <div style={{ fontWeight: 700, color: "#fbbf24", marginBottom: 8, fontSize: "0.9rem" }}>
+                          ⚡ Needs Stronger Evidence:
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {myEvidence.filter(e => e.evidence_type === "SELF_REPORTED").map((e, i) => (
+                            <span key={i} className="badge badge-self-reported">{e.skill?.canonical_name || "Self-reported"} (Baseline)</span>
+                          ))}
+                          {myEvidence.filter(e => e.evidence_type === "SELF_REPORTED").length === 0 && (
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>All current skills backed by Tier 2+ evidence.</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Column 3: Skill Gaps to Close */}
                       <div style={{ padding: 16, borderRadius: 10, background: "rgba(244, 63, 94, 0.05)", border: "1px solid rgba(244, 63, 94, 0.2)" }}>
-                        <div style={{ fontWeight: 700, color: "#fda4af", marginBottom: 8 }}>Skill Gaps to Close:</div>
+                        <div style={{ fontWeight: 700, color: "#fda4af", marginBottom: 8, fontSize: "0.9rem" }}>
+                          ✕ Skill Gaps to Close ({transitionAnalysis.missing_skills?.length || 0}):
+                        </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {transitionAnalysis.missing_skills?.map((s, i) => (
                             <span key={i} className="badge badge-gap">{s}</span>
                           ))}
+                          {(!transitionAnalysis.missing_skills || transitionAnalysis.missing_skills.length === 0) && (
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No gaps identified!</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1631,19 +2243,29 @@ export default function App() {
 
                 {/* Practical Role-Based Tasks Sandbox */}
                 <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16 }}>
-                    Real-World Practical Role Tasks (Proves hands-on ability)
-                  </h3>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                    <div>
+                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                        Real-World Practical Role Tasks (Tier 4 Project Verification)
+                      </h3>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                        Submissions are scored against rigorous production rubrics to earn verified Project Evidence on your Skill Passport.
+                      </p>
+                    </div>
+                  </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     {roleTasks.map((t) => (
                       <div key={t.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{t.title}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{t.title}</div>
+                          <span className="badge badge-verified">Rubric Validated</span>
+                        </div>
                         <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 6 }}>{t.prompt_text}</p>
                         <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
                           <input
                             type="text"
-                            placeholder="Enter submission URL or GitHub gist link..."
+                            placeholder="Enter solution URL, GitHub PR, or artifact documentation link..."
                             value={selectedTaskSubmission}
                             onChange={(e) => setSelectedTaskSubmission(e.target.value)}
                             className="input-field"
@@ -1654,9 +2276,10 @@ export default function App() {
                               if (!selectedTaskSubmission) return;
                               setSubmittingTask(true);
                               try {
-                                await api.submitRoleTask(t.id, "Executive task completed", selectedTaskSubmission);
-                                showNotification("Practical role task submitted for rubric evaluation!");
+                                const res = await api.submitRoleTask(t.id, "Executive task completed", selectedTaskSubmission);
+                                showNotification(res.feedback || "Practical role task submitted for rubric evaluation!");
                                 setSelectedTaskSubmission("");
+                                await loadEmployeeView();
                               } catch (err) {
                                 alert("Submission error: " + err.message);
                               } finally {
@@ -1666,12 +2289,520 @@ export default function App() {
                             disabled={submittingTask}
                             className="btn btn-primary"
                           >
-                            Submit Solution
+                            {submittingTask ? "Evaluating..." : "Submit Solution"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {roleTasks.length === 0 && (
+                      <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No simulation tasks defined for this target role.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ════════ SUBTAB 3: ADAPTIVE ROADMAP ════════ */}
+            {employeeTab === "roadmap" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
+                    <div>
+                      <span className="badge badge-verified" style={{ marginBottom: 6 }}>ADAPTIVE EXECUTIVE ROADMAP</span>
+                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                        Sequential Learning & Verification Milestones
+                      </h2>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0 0 0" }}>
+                        Target: <strong>{roadmapData?.target_role?.title || "Senior Competency Track"}</strong> · Total Topics: {roadmapData?.total_topics || 0}
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <button
+                        onClick={async () => {
+                          await api.regenerateRoadmap();
+                          showNotification("Roadmap refreshed against your latest verified evidence!");
+                          await loadEmployeeView();
+                        }}
+                        className="btn btn-secondary"
+                        style={{ fontSize: "0.8rem" }}
+                      >
+                        <RefreshCw size={14} /> Refresh Roadmap
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {roadmapData?.topics?.map((topic, i) => (
+                      <div key={topic.id || i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: `1px solid ${topic.is_completed ? "rgba(16, 185, 129, 0.4)" : "var(--border-subtle)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+                        <div style={{ flex: 1, minWidth: 260 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontWeight: 800, color: topic.is_completed ? "var(--accent-emerald)" : "#fff", fontSize: "1rem" }}>
+                              {i + 1}. {topic.title}
+                            </span>
+                            <span className={`badge ${topic.is_completed ? "badge-verified" : "badge-self-reported"}`}>
+                              {topic.is_completed ? "VERIFIED / COMPLETED" : "IN PROGRESS"}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                            Skill Category: <strong style={{ color: "var(--accent-cyan)" }}>{topic.skill?.canonical_name || "Technical Competency"}</strong>
+                          </div>
+
+                          {topic.prerequisites?.length > 0 && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Prerequisites:</span>
+                              {topic.prerequisites.map((p, pi) => (
+                                <span key={pi} className="badge badge-gap" style={{ fontSize: "0.68rem" }}>{p}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Est. {topic.estimated_hours || 6}h</span>
+                          <button onClick={() => openStudyDeck(topic.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
+                            <BookOpen size={13} /> Study Deck
+                          </button>
+                          <button onClick={() => openQuiz(topic.assessment_id || 1)} className="btn btn-primary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
+                            Take Assessment
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(!roadmapData?.topics || roadmapData.topics.length === 0) && (
+                      <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No roadmap generated yet. Select a target role to build your adaptive roadmap.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ════════ SUBTAB 4: EVIDENCE & SKILL PASSPORT ════════ */}
+            {employeeTab === "evidence" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* 5-Tier Evidence Matrix Header */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
+                    <div>
+                      <span className="badge badge-verified" style={{ marginBottom: 6 }}>VERIFIABLE EVIDENCE MATRIX</span>
+                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                        Professional Skill Passport & Evidence Records ({myEvidence.length})
+                      </h2>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0 0 0" }}>
+                        Distinguishes 5 distinct tiers: Self-Reported, Resume-Extracted, Assessment-Verified, Project-Verified, and Mentor-Endorsed.
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button onClick={() => setAddSelfSkillModalOpen(true)} className="btn btn-secondary" style={{ fontSize: "0.8rem" }}>
+                        <PlusCircle size={14} /> Add Self-Reported Skill
+                      </button>
+                      <button onClick={() => setProjectModalOpen(true)} className="btn btn-primary" style={{ fontSize: "0.8rem" }}>
+                        <UploadCloud size={14} /> Submit Project Proof
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Evidence Filter Tabs */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                    {["all", "verified", "resume", "self"].map((tabKey) => (
+                      <button
+                        key={tabKey}
+                        onClick={() => setEvidenceFilter(tabKey)}
+                        className={`btn ${evidenceFilter === tabKey ? "btn-primary" : "btn-secondary"}`}
+                        style={{ fontSize: "0.75rem", padding: "6px 12px", textTransform: "capitalize" }}
+                      >
+                        {tabKey === "all" ? `All Evidence (${myEvidence.length})` : tabKey === "verified" ? "Verified (Tiers 3–5)" : tabKey === "resume" ? "Resume Extracted (Tier 2)" : "Self-Reported (Tier 1)"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Filtered Evidence Cards Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
+                    {myEvidence
+                      .filter((ev) => {
+                        const et = (ev.evidence_type || "").toLowerCase();
+                        if (evidenceFilter === "verified") return ["assessed", "project", "mentor_endorsed"].includes(et);
+                        if (evidenceFilter === "resume") return et === "resume_extracted";
+                        if (evidenceFilter === "self") return et === "self_reported";
+                        return true;
+                      })
+                      .map((ev) => {
+                        const et = (ev.evidence_type || "self_reported").toLowerCase();
+                        return (
+                          <div key={ev.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10 }}>
+                            <div>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                                <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff" }}>
+                                  {ev.skill?.canonical_name || ev.skill_name || "Technical Competency"}
+                                </div>
+                                <span className={`badge badge-${['mentor_endorsed', 'assessed', 'project'].includes(et) ? 'verified' : et === 'resume_extracted' ? 'synthetic' : 'self-reported'}`}>
+                                  {et.replace(/_/g, " ").toUpperCase()}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--accent-cyan)", marginTop: 4 }}>
+                                Proficiency Level: {ev.level || "Intermediate"}
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 6 }}>
+                                {ev.source_description || "Verified on platform"}
+                              </div>
+                            </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border-subtle)" }}>
+                            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                              Updated: {new Date(ev.verified_at || Date.now()).toLocaleDateString()}
+                            </span>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button
+                                onClick={() => { setSelectedEvidenceForEdit(ev); setEditEvidenceModalOpen(true); }}
+                                className="btn btn-secondary"
+                                style={{ padding: "4px 8px", fontSize: "0.72rem" }}
+                              >
+                                <Edit2 size={12} /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEvidence(ev.id)}
+                                className="btn btn-secondary"
+                                style={{ padding: "4px 8px", fontSize: "0.72rem", color: "#fda4af" }}
+                              >
+                                <Trash2 size={12} /> Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Public Skill Passport & Revocation Controls */}
+                {passport && (
+                  <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Shield size={20} color="var(--primary)" />
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                          Cryptographic Skill Passport: {passport.passport_id}
+                        </h3>
+                        <span className={`badge ${passport.is_revoked ? "badge-gap" : "badge-verified"}`}>
+                          {passport.is_revoked ? "REVOKED / PRIVATE" : "ACTIVE"}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 6 }}>
+                        Public verification slug: <code style={{ color: "var(--accent-cyan)" }}>{passport.public_slug}</code>
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button
+                        onClick={handleTogglePassportRevoke}
+                        disabled={actionLoading}
+                        className={`btn ${passport.is_revoked ? "btn-accent" : "btn-secondary"}`}
+                        style={{ fontSize: "0.8rem" }}
+                      >
+                        {passport.is_revoked ? <Unlock size={14} /> : <Lock size={14} />}
+                        {passport.is_revoked ? "Re-Activate Passport Access" : "Revoke Public Access"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ════════ SUBTAB 5: EXECUTIVE ATS RESUME ════════ */}
+            {employeeTab === "resume" && (
+              <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Sparkles size={22} color="var(--primary)" />
+                  <div>
+                    <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                      Executive ATS Resume & Experience Scanner
+                    </h3>
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                      Strictly fact-based: extracted candidate skills will <strong>never</strong> enter your verified profile until you confirm them.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+                  {/* Upload Box */}
+                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px dashed var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                      <UploadCloud size={18} color="var(--accent-cyan)" /> Upload Executive Resume (PDF, DOCX, TXT)
+                    </div>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      Secure document analysis. Extracted text is checked against target leadership competencies.
+                    </p>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={handleUploadResumeFile}
+                      disabled={uploadingResume}
+                      style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}
+                    />
+                    {uploadingResume && <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>Parsing document and extracting candidate skills...</span>}
+                  </div>
+
+                  {/* Manual Paste Box */}
+                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                      <FileText size={18} color="var(--accent-emerald)" /> Or Paste Resume / Experience Text
+                    </div>
+                    <textarea
+                      className="input-field"
+                      rows={3}
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      placeholder="Paste executive experience, project achievements, or leadership competencies..."
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button onClick={handleExtractResumeSkills} disabled={extractingResume || !resumeText.trim()} className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>
+                        {extractingResume ? "Scanning..." : "Scan Pasted Text"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Candidate Skills Extracted Review & Confirmation */}
+                {extractedSkills.length > 0 && (
+                  <div style={{ marginTop: 8, padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.25)", display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                      <div>
+                        <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)", margin: 0 }}>
+                          Candidate Skills Extracted ({extractedSkills.length}) - Review & Confirm:
+                        </h4>
+                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                          Uncheck any skill that was extracted incorrectly. Only checked skills enter your Tier 2 Resume-Extracted profile.
+                        </p>
+                      </div>
+                      <button onClick={handleConfirmResumeSkills} disabled={actionLoading} className="btn btn-accent" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
+                        <CheckCircle2 size={16} /> Confirm Checked Skills to Profile
+                      </button>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
+                      {extractedSkills.map((sk, i) => {
+                        const isChecked = candidateConfirmedSkills[sk.skill] !== false;
+                        return (
+                          <label key={i} style={{ padding: "8px 12px", borderRadius: 8, background: isChecked ? "rgba(99, 102, 241, 0.18)" : "rgba(255,255,255,0.03)", border: `1px solid ${isChecked ? "rgba(99, 102, 241, 0.4)" : "var(--border-subtle)"}`, display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.85rem", cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => setCandidateConfirmedSkills({ ...candidateConfirmedSkills, [sk.skill]: e.target.checked })}
+                              style={{ marginTop: 3 }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: 700, color: "#fff" }}>{sk.skill}</div>
+                              <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>{Math.round((sk.confidence || 0.8) * 100)}% match confidence</div>
+                              {sk.matched_span && <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: 2 }}>matched: "{sk.matched_span}"</div>}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {atsSuggestions.length > 0 && (
+                      <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
+                        <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
+                          {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Uploaded Resumes on File Management */}
+                <div style={{ marginTop: 8 }}>
+                  <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FileText size={16} color="var(--primary)" /> Executive Resumes Stored ({uploadedResumes.length})
+                  </h4>
+                  {uploadedResumes.length === 0 ? (
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No resumes uploaded yet. Upload your executive PDF/DOCX to store evidence and generate role gap alignments.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {uploadedResumes.map((r) => (
+                        <div key={r.id} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{r.filename}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              Target Role: {r.target_role || "Leadership"} · Uploaded: {new Date(r.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteResume(r.id)}
+                            disabled={actionLoading}
+                            className="btn btn-secondary"
+                            style={{ fontSize: "0.75rem", padding: "4px 10px", color: "#fda4af" }}
+                            title="Securely delete resume file"
+                          >
+                            <Trash2 size={13} /> Delete File
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ════════ SUBTAB 6: OPPORTUNITIES RADAR & TRACKER ════════ */}
+            {employeeTab === "jobs" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Active Application Tracker */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <CheckSquare size={18} color="var(--accent-emerald)" /> Professional Application Tracker ({savedJobs.length} Opportunities)
+                  </h3>
+
+                  {savedJobs.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No saved opportunities yet. Save matching roles below to track your applications!</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {savedJobs.map((item) => (
+                        <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
+                            {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <select
+                              value={item.status}
+                              onChange={(e) => handleUpdateAppStatus(item.id, e.target.value)}
+                              className="input-field"
+                              style={{ padding: "6px 10px", fontSize: "0.8rem", width: "auto" }}
+                            >
+                              <option value="saved">Saved</option>
+                              <option value="applied">Applied</option>
+                              <option value="interviewing">Interviewing</option>
+                              <option value="offered">Offered</option>
+                              <option value="rejected">Rejected</option>
+                            </select>
+                            <span className="badge badge-verified">{item.status.toUpperCase()}</span>
+                            <button
+                              onClick={() => handleDeleteSavedOpportunity(item.id)}
+                              className="btn btn-secondary"
+                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "#fda4af" }}
+                              title="Remove opportunity from tracking"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Job Matches Radar */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Briefcase size={18} color="var(--primary)" /> Lateral & Leadership Opportunity Matches
+                  </h3>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
+                    {jobMatches.map((jm, i) => (
+                      <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{jm.job.title}</div>
+                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
+                          </div>
+                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
+                        </div>
+
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 10 }}>
+                          {jm.explanation}
+                        </div>
+
+                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Source: {jm.job.source || "Naukri"}</span>
+                          <button onClick={() => handleSaveJob(jm.job.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
+                            Save Opportunity
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ════════ SUBTAB 7: EXECUTIVE MENTORS & ADVISORY ════════ */}
+            {employeeTab === "mentors" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Mentors Directory */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <UserCheck size={18} color="var(--accent-emerald)" /> Executive Mentors & Leadership Advisors
+                  </h3>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+                    {mentorsList.map((m) => (
+                      <div key={m.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{m.user?.full_name || "Executive Mentor"}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)" }}>{m.years_experience} Years Exp · {m.languages?.join(", ") || "English"}</div>
+                          </div>
+                          <span className="badge badge-verified">Verified</span>
+                        </div>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 8 }}>{m.bio}</p>
+                        <div style={{ marginTop: 14 }}>
+                          <button
+                            onClick={() => handleOpenBookingModal({ id: 1, title: `Executive Advisory with ${m.user?.full_name}`, duration_minutes: 45, price: 500 })}
+                            className="btn btn-primary"
+                            style={{ fontSize: "0.75rem", width: "100%" }}
+                          >
+                            <Calendar size={13} /> Book Advisory Session (Sandbox)
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scheduled Advisory Sessions */}
+                <div className="glass-panel" style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Calendar size={18} color="var(--primary)" /> Scheduled Advisory Sessions ({myBookings.length})
+                  </h3>
+
+                  {myBookings.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                      No sessions scheduled yet. Book an executive advisor above for leadership coaching or role switch guidance.
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {myBookings.map((b) => (
+                        <div key={b.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                              Scheduled: {new Date(b.scheduled_at).toLocaleString()} · Status: <span style={{ color: b.status === "confirmed" ? "var(--accent-emerald)" : "var(--accent-rose)", fontWeight: 600 }}>{b.status.toUpperCase()}</span>
+                            </div>
+                            {b.meeting_link && (
+                              <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)", marginTop: 4 }}>
+                                Video Room: <a href={b.meeting_link} target="_blank" rel="noreferrer" style={{ color: "var(--accent-cyan)", textDecoration: "underline" }}>{b.meeting_link}</a>
+                              </div>
+                            )}
+                          </div>
+                          {b.status !== "cancelled" && (
+                            <button
+                              onClick={() => handleCancelBooking(b.id)}
+                              disabled={actionLoading}
+                              className="btn btn-secondary"
+                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "#fda4af" }}
+                            >
+                              Cancel Session
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2823,6 +3954,18 @@ export default function App() {
                 />
               </div>
 
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "0.82rem", color: "#e2e8f0", cursor: "pointer", background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+                <input
+                  type="checkbox"
+                  checked={mentorShareConsent}
+                  onChange={(e) => setMentorShareConsent(e.target.checked)}
+                  style={{ marginTop: 3 }}
+                />
+                <span>
+                  <strong>Share Profile Evidence with Mentor:</strong> Grant this verified mentor view-only access to my active roadmap and verified skill passport for session prep. (Private goals, applications, and salary targets remain strictly confidential).
+                </span>
+              </label>
+
               <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                 A secure sandbox video link (<code style={{ color: "var(--accent-cyan)" }}>https://meeting.growsphere.dev/sandbox-...</code>) and calendar invite will be generated instantly upon confirmation.
               </div>
@@ -2837,6 +3980,63 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* ─── MODAL 11: EDIT STUDENT PROFILE ─── */}
+      <EditStudentProfileModal
+        isOpen={editStudentModalOpen}
+        onClose={() => setEditStudentModalOpen(false)}
+        initialProfile={studentProfile}
+        targetRoles={careerRoles}
+        onSave={async (updatedData) => {
+          await api.updateStudentProfile(updatedData);
+          showNotification("Student profile & career goals updated!");
+          setEditStudentModalOpen(false);
+          await loadStudentView();
+        }}
+      />
+
+      {/* ─── MODAL 12: EDIT EMPLOYEE PROFILE ─── */}
+      <EditEmployeeProfileModal
+        isOpen={editEmployeeModalOpen}
+        onClose={() => setEditEmployeeModalOpen(false)}
+        initialProfile={employeeProfile}
+        targetRoles={careerRoles}
+        onSave={async (updatedData) => {
+          await api.updateEmployeeProfile(updatedData);
+          showNotification("Employee profile & private goals updated!");
+          setEditEmployeeModalOpen(false);
+          await loadEmployeeView();
+        }}
+      />
+
+      {/* ─── MODAL 13: ADD SELF-REPORTED SKILL ─── */}
+      <AddSelfSkillModal
+        isOpen={addSelfSkillModalOpen}
+        onClose={() => setAddSelfSkillModalOpen(false)}
+        skillsList={allSkills}
+        onSave={async ({ skill_id, level, notes }) => {
+          await api.addSelfReportedSkill(parseInt(skill_id), level, notes);
+          showNotification("Self-reported baseline skill added to your profile!");
+          setAddSelfSkillModalOpen(false);
+          if (activeRole === "student") await loadStudentView();
+          else await loadEmployeeView();
+        }}
+      />
+
+      {/* ─── MODAL 14: EDIT EVIDENCE ─── */}
+      <EditEvidenceModal
+        isOpen={editEvidenceModalOpen}
+        onClose={() => { setEditEvidenceModalOpen(false); setSelectedEvidenceForEdit(null); }}
+        evidence={selectedEvidenceForEdit}
+        onSave={async (evidenceId, { level, source_description }) => {
+          await api.updateSkillEvidence(evidenceId, level, source_description);
+          showNotification("Skill evidence record updated!");
+          setEditEvidenceModalOpen(false);
+          setSelectedEvidenceForEdit(null);
+          if (activeRole === "student") await loadStudentView();
+          else await loadEmployeeView();
+        }}
+      />
     </div>
   );
 }
