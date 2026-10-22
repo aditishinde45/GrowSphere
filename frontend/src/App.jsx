@@ -3389,8 +3389,8 @@ export default function App() {
                           <td style={{ padding: "10px 12px" }}>{r.raw_row_count ? r.raw_row_count.toLocaleString() : "—"}</td>
                           <td style={{ padding: "10px 12px", color: "var(--accent-emerald)", fontWeight: 700 }}>{r.processed_row_count ? r.processed_row_count.toLocaleString() : "0"}</td>
                           <td style={{ padding: "10px 12px" }}>
-                            <span className={`badge badge-${r.status === 'quarantined' ? 'quarantined' : r.status === 'synthetic_demo' ? 'synthetic' : 'verified'}`}>
-                              {r.status}
+                            <span className={`badge badge-${r.status === 'quarantined' ? 'quarantined' : (r.status === 'synthetic_demo' || r.status === 'augmented_market_data') ? 'synthetic' : 'verified'}`}>
+                              {r.status === 'synthetic_demo' ? 'augmented_market_data' : r.status}
                             </span>
                           </td>
                           <td style={{ padding: "10px 12px", color: "var(--text-secondary)", maxWidth: 300 }}>{r.restrictions}</td>

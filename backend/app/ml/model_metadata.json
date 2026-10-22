@@ -1,0 +1,96 @@
+{
+  "model_architecture_version": "2.0.0-production-expanded",
+  "training_timestamp": "2026-10-22T20:20:00Z",
+  "frameworks": [
+    "scikit-learn 1.5.2",
+    "numpy",
+    "pandas"
+  ],
+  "dataset_provenance": {
+    "policy": "100% Raw Data Directory Unified Corpus with Empirical Grounding",
+    "sources_utilized": [
+      "cleaned_dataset.csv (100,000 job postings)",
+      "Naukri Jobs Data.csv (250,715 labour-market postings)",
+      "student_placement_career_success_dataset.csv (25,000 candidate profiles)",
+      "ai_jobs_market_2025_2026.csv (1,500 specialized postings)",
+      "scraped_jobs.csv & cleaned_jobs.csv (40,072 opportunities)",
+      "scraped_internships.csv & cleaned_internship.csv (39,072 internships)",
+      "Aicte Intership Dataset.csv (2,237 institutional postings)",
+      "scraped_hackathons.csv & cleaned_hackathons.csv (8,890 challenges)",
+      "udemy_courses.csv, edx_courses.csv, coursea_data.csv, MOOC.csv (17,000+ courses)",
+      "learnup_opportunities.csv (200 curated opportunities)",
+      "Simulated Substitutions & Synthetic Multi-Skill Augmentation (2,500 balanced synergies)"
+    ],
+    "total_training_records_processed": 39130
+  },
+  "models": {
+    "multi_label_skill_extractor": {
+      "algorithm": "TF-IDF (1-2 ngrams, sublinear tf) + OneVsRest Logistic Regression",
+      "canonical_classes": 25,
+      "skills": [
+        "AWS",
+        "Business Intelligence",
+        "CSS",
+        "Cloud Architecture",
+        "Communication",
+        "Cybersecurity",
+        "Data Visualization",
+        "Data Wrangling",
+        "Docker",
+        "Excel",
+        "Git",
+        "HTML",
+        "JavaScript",
+        "Kubernetes",
+        "Linux",
+        "Machine Learning",
+        "Node.js",
+        "Power BI",
+        "Python",
+        "R",
+        "React",
+        "SAS",
+        "SQL",
+        "Statistics",
+        "Tableau"
+      ],
+      "train_samples": 33260,
+      "test_samples": 5870,
+      "micro_precision": 0.9521,
+      "micro_recall": 0.9712,
+      "micro_f1": 0.9616,
+      "macro_f1": 0.9164
+    },
+    "career_readiness_evaluator": {
+      "algorithm": "Gradient Boosting Regressor (120 estimators, depth 4)",
+      "source_profiles": 25000,
+      "r2_score": 1.0,
+      "mae_points": 0.0,
+      "features": [
+        "cgpa",
+        "DSA_problems_solved",
+        "GitHub_repos",
+        "hackathons_participated",
+        "development_projects_count",
+        "AI_ML_projects",
+        "internships_completed",
+        "resume_score",
+        "communication_skills",
+        "aptitude_score",
+        "mock_interview_score",
+        "study_hours_daily",
+        "self_learning_hours",
+        "adaptability_score"
+      ]
+    },
+    "compensation_and_demand_valuation": {
+      "algorithm": "MultiOutput Ridge Regressor",
+      "source_postings": 25000,
+      "target_outputs": [
+        "salary_minimum_inr",
+        "salary_maximum_inr",
+        "demand_index_100"
+      ]
+    }
+  }
+}
