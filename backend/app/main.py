@@ -14,7 +14,7 @@ from app.routers import (
     auth, skills, roadmap, assessments, courses,
     jobs, mentors, profiles, dashboard, data_register,
     passport, credits, payments, mock_interview,
-    career_transition, learning_materials, admin
+    career_transition, learning_materials, admin, ml
 )
 
 
@@ -59,6 +59,7 @@ app.include_router(mock_interview.router, prefix="/api")
 app.include_router(career_transition.router, prefix="/api")
 app.include_router(learning_materials.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(ml.router, prefix="/api")
 
 
 @app.get("/")

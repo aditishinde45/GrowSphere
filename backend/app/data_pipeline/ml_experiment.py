@@ -33,7 +33,7 @@ CANONICAL_SKILL_PATTERNS: Dict[str, List[str]] = {
     "Data Visualization": [r"\bdata visualization\b", r"\bvisualization\b", r"\bdashboards?\b", r"\bdata reporting\b"],
     "Data Wrangling": [r"\bdata wrangling\b", r"\betl\b", r"\bdata cleaning\b", r"\bdata preparation\b", r"\bdata extraction\b"],
     "Excel": [r"\bexcel\b", r"\bms excel\b", r"\badvanced excel\b", r"\bvba\b", r"\bspreadsheets\b"],
-    "Machine Learning": [r"\bmachine learning\b", r"\bml\b", r"\bpredictive modeling\b", r"\bclustering\b"],
+    "Machine Learning": [r"\bmachine learning\b", r"\bml\b", r"\bpredictive modeling\b", r"\bclustering\b", r"\bscikit-learn\b", r"\btensorflow\b", r"\bpytorch\b"],
     "Power BI": [r"\bpower bi\b", r"\bpowerbi\b", r"\bdax\b", r"\bpower query\b"],
     "Python": [r"\bpython\b", r"\bpandas\b", r"\bnumpy\b"],
     "R": [r"\br\b", r"\br programming\b"],
@@ -41,6 +41,19 @@ CANONICAL_SKILL_PATTERNS: Dict[str, List[str]] = {
     "SQL": [r"\bsql\b", r"\bmysql\b", r"\bpostgresql\b", r"\bpl/sql\b", r"\bt-sql\b", r"\bsql server\b"],
     "Statistics": [r"\bstatistics\b", r"\bstatistical\b", r"\bprobability\b", r"\bhypothesis testing\b"],
     "Tableau": [r"\btableau\b"],
+    "Git": [r"\bgit\b", r"\bgithub\b", r"\bgitlab\b", r"\bversion control\b"],
+    "Communication": [r"\bcommunication\b", r"\bpresentation\b", r"\bverbal\b", r"\bwritten\b", r"\bstakeholder\b"],
+    "React": [r"\breact\b", r"\breact\.js\b", r"\breactjs\b", r"\bredux\b"],
+    "JavaScript": [r"\bjavascript\b", r"\bjs\b", r"\bes6\b", r"\btypescript\b", r"\bts\b"],
+    "Node.js": [r"\bnode\b", r"\bnode\.js\b", r"\bnodejs\b", r"\bexpress\b", r"\bexpress\.js\b"],
+    "HTML": [r"\bhtml\b", r"\bhtml5\b"],
+    "CSS": [r"\bcss\b", r"\bcss3\b", r"\btailwind\b", r"\bsass\b", r"\bbootstrap\b"],
+    "Docker": [r"\bdocker\b", r"\bcontainers?\b", r"\bcontainerization\b"],
+    "Kubernetes": [r"\bkubernetes\b", r"\bk8s\b"],
+    "AWS": [r"\baws\b", r"\bamazon web services\b", r"\bec2\b", r"\bs3\b", r"\blambda\b"],
+    "Cloud Architecture": [r"\bcloud\b", r"\bazure\b", r"\bgcp\b", r"\bcloud architecture\b", r"\bcloud infrastructure\b"],
+    "Linux": [r"\blinux\b", r"\bubuntu\b", r"\bbash\b", r"\bshell scripting\b", r"\bunix\b"],
+    "Cybersecurity": [r"\bcybersecurity\b", r"\bnetwork security\b", r"\bwireshark\b", r"\bmetasploit\b", r"\bowasp\b", r"\bfirewalls?\b", r"\binformation security\b"],
 }
 
 

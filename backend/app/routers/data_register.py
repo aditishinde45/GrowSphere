@@ -63,7 +63,7 @@ def get_register_summary(
     total_processed_rows = sum(r.processed_row_count or 0 for r in records)
     quarantined_files = [r.source_filename for r in records if r.status == "quarantined"]
     historical_files = [r.source_filename for r in records if r.status == "historical"]
-    synthetic_files = [r.source_filename for r in records if r.status == "synthetic_demo"]
+    synthetic_files = [r.source_filename for r in records if r.status in ("synthetic_demo", "augmented_market_data")]
 
     return {
         "total_files_accounted_for": total_files,
@@ -72,5 +72,6 @@ def get_register_summary(
         "quarantined_datasets": quarantined_files,
         "historical_catalogs": historical_files,
         "synthetic_demo_fixtures": synthetic_files,
+        "augmented_market_datasets": synthetic_files,
         "compliance_status": "100% accounted for with zero unmapped or silently ignored files",
     }

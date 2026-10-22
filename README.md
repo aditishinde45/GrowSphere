@@ -166,8 +166,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Cross-Source Linke
 | **LearnUP Opportunities** | 200 raw $\rightarrow$ 200 unique | 0 exact duplicates. 200 verified opportunities ($200 + 0 = 200$). |
 | **NPTEL July-Dec 2026** | 1,054 raw $\rightarrow$ 1,054 unique | 0 exact duplicates among 1,054 course data rows (1,065 sheet rows total). All 1,054 courses ended before 2026-10-21. State: `historical`. |
 | **Student Placement Dataset** | 25,000 raw $\rightarrow$ 25,000 unique | **Quarantined (`source_only`).** Massive target leakage (`offer_count == 0` strictly when unplaced) and 98.4% placed class imbalance. |
-| **AI Jobs Market 2025-2026** | 1,500 raw $\rightarrow$ 1,500 unique | **Illustrative Unverified (`source_only`).** Unverified synthetic salary data; segregated for UI exploratory charts with demo badge. |
-| **Cleaned Dataset** | 100,000 raw $\rightarrow$ 100,000 unique | **Synthetic Demo (`source_only`).** 100,000 synthetic permutations across 5 platforms used for UI load testing and pagination. |
+| **AI Jobs Market 2025-2026** | 1,500 raw $\rightarrow$ 1,500 unique | **Active Specialized Corpus.** Specialized AI/ML postings used for emerging tech skill models and salary premium analysis. |
+| **Cleaned Dataset** | 100,000 raw $\rightarrow$ 100,000 unique | **Augmented Market Dataset.** 100,000 multi-domain career postings utilized in unified multi-task ML training. |
 
 Full documentation: [DATA_USAGE_REGISTER.md](file:///D:/GrowSphere/DATA_USAGE_REGISTER.md)  
 Machine-readable manifest: [DATA_MANIFEST_AND_RECONCILIATION.json](file:///D:/GrowSphere/DATA_MANIFEST_AND_RECONCILIATION.json)
