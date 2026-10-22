@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import * as api from "./api";
 import LandingPage from "./LandingPage";
 import AuthModal from "./AuthModal";
+import ResumeBuilder from "./ResumeBuilder";
+import MockInterviewStudio from "./MockInterviewStudio";
+import StudyNotesModal from "./StudyNotesModal";
+import SkillDemandRadar from "./SkillDemandRadar";
+import SellerDemandIntelligence from "./SellerDemandIntelligence";
+import { MentorIntelligenceView, LearnerProfilePreviewModal } from "./MentorIntelligence";
+
 import {
   EditStudentProfileModal,
   EditEmployeeProfileModal,
@@ -113,6 +120,23 @@ export default function App() {
   const [extractingResume, setExtractingResume] = useState(false);
 
   // AI Mock Interview Studio State
+    // New Modular Feature States (PRD Sections 5.2, 5.4, 5.9, 5.10, 7.2, 8.3)
+  const [resumeMode, setResumeMode] = useState("builder"); // builder | scanner
+  const [studyNotesTopic, setStudyNotesTopic] = useState(null);
+  const [studyNotesMaterials, setStudyNotesMaterials] = useState(null);
+  const [previewBooking, setPreviewBooking] = useState(null);
+
+  const handleOpenStudyNotes = async (topic) => {
+    setStudyNotesTopic(topic);
+    try {
+      const res = await api.getTopicMaterials(topic.id);
+      setStudyNotesMaterials(res);
+    } catch (err) {
+      console.warn("Could not fetch topic materials, fallback to dynamic generator:", err);
+      setStudyNotesMaterials(null);
+    }
+  };
+
   const [interviewSession, setInterviewSession] = useState(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [learnerAnswer, setLearnerAnswer] = useState("");
@@ -990,7 +1014,7 @@ export default function App() {
           onQuickLogin={switchRole}
         />
         {notification && (
-          <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 110, background: "var(--accent-success)", color: "#fff", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "var(--glass-shadow)", fontWeight: 600, fontSize: "0.875rem" }}>
+          <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 110, background: "var(--accent-success)", color: "var(--text-primary)", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "var(--glass-shadow)", fontWeight: 600, fontSize: "0.875rem" }}>
             <CheckCircle2 size={18} />
             <span>{notification}</span>
           </div>
@@ -1127,7 +1151,7 @@ export default function App() {
                 <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{user?.full_name || DEMO_USERS[activeRole]?.name}</div>
                 <div style={{ color: "var(--primary)", textTransform: "capitalize" }}>{user?.email || activeRole}</div>
               </div>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#ffffff" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "var(--primary-text)" }}>
                 {(user?.full_name || DEMO_USERS[activeRole]?.name || "U")[0].toUpperCase()}
               </div>
               <button
@@ -1146,7 +1170,7 @@ export default function App() {
 
       {/* ─── Global Notification Toast ─── */}
       {notification && (
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 100, background: "rgba(16, 185, 129, 0.95)", color: "#fff", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", fontWeight: 600, fontSize: "0.875rem" }}>
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 100, background: "rgba(16, 185, 129, 0.95)", color: "var(--text-primary)", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", fontWeight: 600, fontSize: "0.875rem" }}>
           <CheckCircle2 size={18} />
           <span>{notification}</span>
         </div>
@@ -1155,7 +1179,7 @@ export default function App() {
       {/* ─── Main Content Container ─── */}
       <main style={{ flex: 1, maxWidth: 1360, margin: "0 auto", padding: "24px 20px", width: "100%" }}>
         {error && (
-          <div style={{ padding: 16, marginBottom: 20, borderRadius: 12, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ padding: 16, marginBottom: 20, borderRadius: 12, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "var(--accent-danger-text)", display: "flex", alignItems: "center", gap: 12 }}>
             <AlertTriangle size={20} />
             <span>{error}</span>
           </div>
@@ -1176,11 +1200,11 @@ export default function App() {
                     <GraduationCap size={14} /> {studentProfile?.education || "Undergraduate / Graduate"}
                   </span>
                 </div>
-                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", margin: "4px 0" }}>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", margin: "4px 0" }}>
                   {user?.full_name || "Student Learner"}
                 </h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0" }}>
-                  Institution: <strong style={{ color: "#fff" }}>{studentProfile?.college || "College / University not set"}</strong> · Location: <strong>{studentProfile?.location || "Not specified"}</strong> · Class of <strong>{studentProfile?.graduation_year || 2025}</strong>
+                  Institution: <strong style={{ color: "var(--text-primary)" }}>{studentProfile?.college || "College / University not set"}</strong> · Location: <strong>{studentProfile?.location || "Not specified"}</strong> · Class of <strong>{studentProfile?.graduation_year || 2025}</strong>
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
                   <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 4 }}>
@@ -1203,13 +1227,13 @@ export default function App() {
             {dashboardData?.next_action && (
               <div style={{ padding: "16px 20px", borderRadius: 12, background: "linear-gradient(90deg, rgba(99,102,241,0.15) 0%, rgba(16,185,129,0.1) 100%)", border: "1px solid rgba(99,102,241,0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--primary-text)" }}>
                     <Sparkles size={20} />
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="badge badge-verified" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>RECOMMENDED NEXT ACTION</span>
-                      <span style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{dashboardData.next_action.title}</span>
+                      <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{dashboardData.next_action.title}</span>
                     </div>
                     <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: 2 }}>{dashboardData.next_action.description}</div>
                   </div>
@@ -1224,6 +1248,9 @@ export default function App() {
             <div className="subtab-bar">
               <button className={`subtab-btn ${studentTab === "roadmap" ? "active" : ""}`} onClick={() => setStudentTab("roadmap")}>
                 <Compass size={16} /> Roadmap & Adaptive Learning
+              </button>
+              <button className={`subtab-btn ${studentTab === "radar" ? "active" : ""}`} onClick={() => setStudentTab("radar")}>
+                <TrendingUp size={16} /> Skill Demand Radar & Forecasts
               </button>
               <button className={`subtab-btn ${studentTab === "evidence" ? "active" : ""}`} onClick={() => setStudentTab("evidence")}>
                 <Shield size={16} /> 5-Tier Evidence & Skill Passport
@@ -1256,7 +1283,7 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                    <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#ffffff", margin: "4px 0" }}>
+                    <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)", margin: "4px 0" }}>
                       {dashboardData?.target_role?.title || studentProfile?.target_role_title || "Target Role Not Set"}
                     </h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: 640, marginTop: 4 }}>
@@ -1304,7 +1331,7 @@ export default function App() {
                         return (
                           <div key={idx} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                              <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#fff" }}>{item.skill.canonical_name}</div>
+                              <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>{item.skill.canonical_name}</div>
                               <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.skill.category || "Technical Skill"}</div>
                             </div>
                             <div>
@@ -1347,7 +1374,7 @@ export default function App() {
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ width: 28, height: 28, borderRadius: "50%", background: topic.is_completed ? "var(--accent-emerald)" : topic.is_locked ? "rgba(255,255,255,0.06)" : "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>
+                            <div style={{ width: 28, height: 28, borderRadius: "50%", background: topic.is_completed ? "var(--accent-emerald)" : topic.is_locked ? "rgba(255,255,255,0.06)" : "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
                               {topic.is_completed ? <Check size={16} /> : topic.is_locked ? <Lock size={14} /> : topic.order}
                             </div>
                             <div>
@@ -1386,7 +1413,7 @@ export default function App() {
                 <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
                   <div>
                     <span className="badge badge-verified" style={{ marginBottom: 6 }}>VERIFIABLE CREDENTIAL</span>
-                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff" }}>
+                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)" }}>
                       Public Skill Passport: {passport?.title || "Data Analyst Proficiency"}
                     </h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
@@ -1476,7 +1503,7 @@ export default function App() {
                             <div key={ev.id} style={{ padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                               <div>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                                  <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>
+                                  <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>
                                     {ev.skill?.canonical_name || ev.skill_name || `Skill #${ev.skill_id}`}
                                   </div>
                                   <span className={`badge badge-${['mentor_endorsed', 'assessed', 'project'].includes(et) ? 'verified' : et === 'resume_extracted' ? 'synthetic' : 'self-reported'}`}>
@@ -1490,7 +1517,7 @@ export default function App() {
 
                               <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                  Conf: <strong style={{ color: "var(--accent-cyan)" }}>{Math.round((ev.confidence_score || 0.8) * 100)}%</strong> · Level: <span style={{ textTransform: "capitalize", color: "#fff" }}>{ev.level || "intermediate"}</span>
+                                  Conf: <strong style={{ color: "var(--accent-cyan)" }}>{Math.round((ev.confidence_score || 0.8) * 100)}%</strong> · Level: <span style={{ textTransform: "capitalize", color: "var(--text-primary)" }}>{ev.level || "intermediate"}</span>
                                 </div>
                                 {et !== "assessed" && (
                                   <div style={{ display: "flex", gap: 6 }}>
@@ -1523,226 +1550,182 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 3: ATS RESUME SCANNER */}
+            {/* TAB 3: ATS RESUME SCANNER & BUILDER */}
             {studentTab === "resume" && (
-              <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Sparkles size={22} color="var(--primary)" />
-                  <div>
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fff" }}>
-                      Explainable ATS Resume & Project Scanner
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                      Strictly fact-based: extracted candidate skills will <strong>never</strong> enter your verified profile until you confirm them.
-                    </p>
-                  </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Mode Selector Toggle */}
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                  <button
+                    onClick={() => setResumeMode("builder")}
+                    className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <FileText size={15} /> AI Resume Builder & Export Studio
+                  </button>
+                  <button
+                    onClick={() => setResumeMode("scanner")}
+                    className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> ATS Resume Scanner & Parser
+                  </button>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-                  {/* File Upload Box */}
-                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px dashed var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
-                      <UploadCloud size={18} color="var(--accent-cyan)" /> Upload Resume File (PDF, DOCX, TXT)
-                    </div>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Secure document parsing. Extracted text is analyzed against your target role for skill matches and readability.
-                    </p>
-                    <input
-                      type="file"
-                      accept=".pdf,.docx,.txt"
-                      onChange={handleUploadResumeFile}
-                      disabled={uploadingResume}
-                      style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}
-                    />
-                    {uploadingResume && <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>Parsing document and extracting candidate skills...</span>}
-                  </div>
-
-                  {/* Manual Paste Box */}
-                  <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
-                      <FileText size={18} color="var(--accent-emerald)" /> Or Paste Resume / Experience Text
-                    </div>
-                    <textarea
-                      className="input-field"
-                      rows={3}
-                      value={resumeText}
-                      onChange={(e) => setResumeText(e.target.value)}
-                      placeholder="Paste work experience, project descriptions, or technical competencies..."
-                    />
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button onClick={handleExtractResumeSkills} disabled={extractingResume || !resumeText.trim()} className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>
-                        {extractingResume ? "Scanning..." : "Scan Pasted Text"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Candidate Skills Extracted Review & Confirmation */}
-                {extractedSkills.length > 0 && (
-                  <div style={{ marginTop: 8, padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.25)", display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                {resumeMode === "builder" ? (
+                  <ResumeBuilder
+                    user={user}
+                    studentProfile={studentProfile}
+                    employeeProfile={employeeProfile}
+                    targetRole={dashboardData?.target_role || { title: studentProfile?.target_role_title || "Data Analyst" }}
+                    myEvidence={myEvidence}
+                  />
+                ) : (
+                  <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Sparkles size={22} color="var(--primary)" />
                       <div>
-                        <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
-                          Candidate Skills Extracted ({extractedSkills.length}) - Review & Confirm:
-                        </h4>
-                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                          Uncheck any skill that was extracted incorrectly or out of context. Only checked skills will enter your Tier 2 Resume-Extracted profile.
+                        <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                          Explainable ATS Resume & Project Scanner
+                        </h3>
+                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                          Strictly fact-based: extracted candidate skills will <strong>never</strong> enter your verified profile until you confirm them.
                         </p>
                       </div>
-                      <button onClick={handleConfirmResumeSkills} disabled={actionLoading} className="btn btn-accent" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
-                        <CheckCircle2 size={16} /> Confirm Checked Skills to Profile
-                      </button>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
-                      {extractedSkills.map((sk, i) => {
-                        const isChecked = candidateConfirmedSkills[sk.skill] !== false;
-                        return (
-                          <label key={i} style={{ padding: "8px 12px", borderRadius: 8, background: isChecked ? "rgba(99, 102, 241, 0.18)" : "rgba(255,255,255,0.03)", border: `1px solid ${isChecked ? "rgba(99, 102, 241, 0.4)" : "var(--border-subtle)"}`, display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.85rem", cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => setCandidateConfirmedSkills({ ...candidateConfirmedSkills, [sk.skill]: e.target.checked })}
-                              style={{ marginTop: 3 }}
-                            />
-                            <div>
-                              <div style={{ fontWeight: 700, color: "#fff" }}>{sk.skill}</div>
-                              <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>{Math.round((sk.confidence || 0.8) * 100)}% match confidence</div>
-                              {sk.matched_span && <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: 2 }}>matched: "{sk.matched_span}"</div>}
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-
-                    {atsSuggestions.length > 0 && (
-                      <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
-                        <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
-                          {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
-                        </ul>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+                      {/* File Upload Box */}
+                      <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px dashed var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <UploadCloud size={18} color="var(--accent-cyan)" /> Upload Resume File (PDF, DOCX, TXT)
+                        </div>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                          Secure document parsing. Extracted text is analyzed against your target role for skill matches and readability.
+                        </p>
+                        <input
+                          type="file"
+                          accept=".pdf,.docx,.txt"
+                          onChange={handleUploadResumeFile}
+                          disabled={uploadingResume}
+                          style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}
+                        />
+                        {uploadingResume && <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>Parsing document and extracting candidate skills...</span>}
                       </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Uploaded Resumes on File Management */}
-                <div style={{ marginTop: 8 }}>
-                  <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                    <FileText size={16} color="var(--primary)" /> Resumes Stored in Profile ({uploadedResumes.length})
-                  </h4>
-                  {uploadedResumes.length === 0 ? (
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No resumes uploaded yet. Upload your PDF/DOCX to store evidence and generate role gap alignments.</p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {uploadedResumes.map((r) => (
-                        <div key={r.id} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{r.filename}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                              Target Role: {r.target_role || "General"} · Uploaded: {new Date(r.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteResume(r.id)}
-                            disabled={actionLoading}
-                            className="btn btn-secondary"
-                            style={{ fontSize: "0.75rem", padding: "4px 10px", color: "#fda4af" }}
-                            title="Securely delete resume file"
-                          >
-                            <Trash2 size={13} /> Delete File
+                      {/* Manual Paste Box */}
+                      <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <FileText size={18} color="var(--accent-emerald)" /> Or Paste Resume / Experience Text
+                        </div>
+                        <textarea
+                          className="input-field"
+                          rows={3}
+                          value={resumeText}
+                          onChange={(e) => setResumeText(e.target.value)}
+                          placeholder="Paste work experience, project descriptions, or technical competencies..."
+                        />
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button onClick={handleExtractResumeSkills} disabled={extractingResume || !resumeText.trim()} className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>
+                            {extractingResume ? "Scanning..." : "Scan Pasted Text"}
                           </button>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Candidate Skills Extracted Review & Confirmation */}
+                    {extractedSkills.length > 0 && (
+                      <div style={{ marginTop: 8, padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.25)", display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                          <div>
+                            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                              Candidate Skills Extracted ({extractedSkills.length}) - Review & Confirm:
+                            </h4>
+                            <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                              Uncheck any skill that was extracted incorrectly or out of context. Only checked skills will enter your Tier 2 Resume-Extracted profile.
+                            </p>
+                          </div>
+                          <button onClick={handleConfirmResumeSkills} disabled={actionLoading} className="btn btn-accent" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
+                            <CheckCircle2 size={16} /> Confirm Checked Skills to Profile
+                          </button>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
+                          {extractedSkills.map((sk, i) => {
+                            const isChecked = candidateConfirmedSkills[sk.skill] !== false;
+                            return (
+                              <label key={i} style={{ padding: "8px 12px", borderRadius: 8, background: isChecked ? "rgba(99, 102, 241, 0.18)" : "rgba(255,255,255,0.03)", border: `1px solid ${isChecked ? "rgba(99, 102, 241, 0.4)" : "var(--border-subtle)"}`, display: "flex", alignItems: "flex-start", gap: 8, fontSize: "0.85rem", cursor: "pointer" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => setCandidateConfirmedSkills({ ...candidateConfirmedSkills, [sk.skill]: e.target.checked })}
+                                  style={{ marginTop: 3 }}
+                                />
+                                <div>
+                                  <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{sk.skill}</div>
+                                  <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>{Math.round((sk.confidence || 0.8) * 100)}% match confidence</div>
+                                  {sk.matched_span && <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: 2 }}>matched: "{sk.matched_span}"</div>}
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {atsSuggestions.length > 0 && (
+                          <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
+                            <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
+                            <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
+                              {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Uploaded Resumes on File Management */}
+                    <div style={{ marginTop: 8 }}>
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                        <FileText size={16} color="var(--primary)" /> Resumes Stored in Profile ({uploadedResumes.length})
+                      </h4>
+                      {uploadedResumes.length === 0 ? (
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No resumes uploaded yet. Upload your PDF/DOCX to store evidence and generate role gap alignments.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {uploadedResumes.map((r) => (
+                            <div key={r.id} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                              <div>
+                                <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.85rem" }}>{r.filename}</div>
+                                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                  Target Role: {r.target_role || "General"} · Uploaded: {new Date(r.created_at).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteResume(r.id)}
+                                disabled={actionLoading}
+                                className="btn btn-secondary"
+                                style={{ fontSize: "0.75rem", padding: "4px 10px", color: "var(--accent-danger-text)" }}
+                                title="Securely delete resume file"
+                              >
+                                <Trash2 size={13} /> Delete File
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* TAB 4: AI MOCK INTERVIEW STUDIO */}
             {studentTab === "mock_interview" && (
-              <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-                  <div>
-                    <span className="badge badge-verified" style={{ marginBottom: 6 }}>INTERVIEW READINESS</span>
-                    <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff" }}>
-                      AI Mock Interview Studio
-                    </h2>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
-                      Simulate real technical interviews for <strong>Data Analyst</strong>. Disclosed cost: <strong>10 GrowSphere Credits</strong> per session.
-                    </p>
-                  </div>
-                  {!interviewSession && (
-                    <button onClick={handleStartMockInterview} disabled={actionLoading} className="btn btn-primary">
-                      <Sparkles size={16} /> Start 10-Credit Technical Interview
-                    </button>
-                  )}
-                </div>
-
-                {interviewSession && (
-                  <div style={{ padding: 20, borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-active)", display: "flex", flexDirection: "column", gap: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span className="badge badge-verified">
-                        Question {currentQuestionIdx + 1} of {interviewSession.questions?.length}
-                      </span>
-                      <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>
-                        Topic: {interviewSession.questions[currentQuestionIdx]?.skill_category || "Technical Competency"}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>
-                      {interviewSession.questions[currentQuestionIdx]?.question_text}
-                    </div>
-
-                    <textarea
-                      className="input-field"
-                      rows={4}
-                      value={learnerAnswer}
-                      onChange={(e) => setLearnerAnswer(e.target.value)}
-                      placeholder="Type your structured answer here (Hint: Use Situation, Task, Action, Result framework with concrete metrics)..."
-                    />
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-                      <button onClick={handleSubmitInterviewAnswer} disabled={submittingAnswer || !learnerAnswer.trim()} className="btn btn-primary">
-                        {submittingAnswer ? "Evaluating Rubric..." : "Submit Response"}
-                      </button>
-                    </div>
-
-                    {interviewFeedback && (
-                      <div style={{ padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>Rubric Diagnostic Score</span>
-                          <span className="badge badge-verified">Score: {Math.round(interviewFeedback.score * 100)}%</span>
-                        </div>
-                        <div style={{ marginTop: 8, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                          <strong>Strengths:</strong> {interviewFeedback.strengths?.join(", ") || "Clear structure"}
-                        </div>
-                        <div style={{ marginTop: 4, fontSize: "0.85rem", color: "#fda4af" }}>
-                          <strong>Improvement Areas:</strong> {interviewFeedback.weaknesses?.join(", ") || "Quantify impact"}
-                        </div>
-                        <div style={{ marginTop: 8, fontSize: "0.8rem", color: "#a5b4fc" }}>
-                          <strong>AI Diagnostic Feedback:</strong> {interviewFeedback.feedback_notes}
-                        </div>
-
-                        {currentQuestionIdx < interviewSession.questions.length - 1 && (
-                          <button
-                            onClick={() => {
-                              setCurrentQuestionIdx(currentQuestionIdx + 1);
-                              setLearnerAnswer("");
-                              setInterviewFeedback(null);
-                            }}
-                            className="btn btn-secondary"
-                            style={{ marginTop: 12 }}
-                          >
-                            Next Question <ChevronRight size={14} />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <MockInterviewStudio
+                user={user}
+                targetRole={dashboardData?.target_role || { title: studentProfile?.target_role_title || "Data Analyst" }}
+                onOpenWallet={openWalletModal}
+                creditBalance={creditBalance}
+                onInterviewComplete={() => { if (activeRole === "student") loadStudentView(); }}
+              />
             )}
 
             {/* TAB 5: OPPORTUNITIES & APPLICATION TRACKER */}
@@ -1761,7 +1744,7 @@ export default function App() {
                       {savedJobs.map((item) => (
                         <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
                             {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
                           </div>
@@ -1783,7 +1766,7 @@ export default function App() {
                             <button
                               onClick={() => handleDeleteSavedOpportunity(item.id)}
                               className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "#fda4af" }}
+                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
                               title="Remove opportunity from tracking"
                             >
                               ✕ Remove
@@ -1806,7 +1789,7 @@ export default function App() {
                       <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{jm.job.title}</div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
                             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
                           </div>
                           <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
@@ -1844,7 +1827,7 @@ export default function App() {
                       return (
                         <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff" }}>{rec.course.title}</div>
+                            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)" }}>{rec.course.title}</div>
                             <span className="badge badge-verified">{rec.course.is_free ? "FREE" : `₹${rec.course.price}`}</span>
                           </div>
                           <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 8 }}>
@@ -1877,7 +1860,7 @@ export default function App() {
                       <div key={m.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{m.user?.full_name || "Verified Mentor"}</div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{m.user?.full_name || "Verified Mentor"}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)" }}>{m.years_experience} Years Exp · {m.languages?.join(", ") || "English"}</div>
                           </div>
                           <span className="badge badge-verified">Verified</span>
@@ -1912,7 +1895,7 @@ export default function App() {
                       {myBookings.map((b) => (
                         <div key={b.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                               Scheduled: {new Date(b.scheduled_at).toLocaleString()} · Status: <span style={{ color: b.status === "confirmed" ? "var(--accent-emerald)" : "var(--accent-rose)", fontWeight: 600 }}>{b.status.toUpperCase()}</span>
                             </div>
@@ -1927,7 +1910,7 @@ export default function App() {
                               onClick={() => handleCancelBooking(b.id)}
                               disabled={actionLoading}
                               className="btn btn-secondary"
-                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "#fda4af" }}
+                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "var(--accent-danger-text)" }}
                             >
                               Cancel Session
                             </button>
@@ -1982,17 +1965,17 @@ export default function App() {
                       <span className="badge badge-verified">EMPLOYEE PROFESSIONAL</span>
                       <span className="badge badge-self-reported">VERIFIED ACCOUNT</span>
                     </div>
-                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                       {user?.full_name || "Professional"}
                     </h1>
                     <div style={{ fontSize: "1rem", color: "var(--accent-cyan)", fontWeight: 600, marginTop: 4 }}>
                       {employeeProfile?.current_role || "Professional"} · {employeeProfile?.current_company || "Organization Not Specified"}
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10, fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                      <span>Experience: <strong style={{ color: "#fff" }}>{employeeProfile?.years_experience || 0} Years</strong></span>
-                      <span>Industry: <strong style={{ color: "#fff" }}>{employeeProfile?.industry || "Technology & Operations"}</strong></span>
+                      <span>Experience: <strong style={{ color: "var(--text-primary)" }}>{employeeProfile?.years_experience || 0} Years</strong></span>
+                      <span>Industry: <strong style={{ color: "var(--text-primary)" }}>{employeeProfile?.industry || "Technology & Operations"}</strong></span>
                       <span>Target Role: <strong style={{ color: "var(--accent-emerald)" }}>{dashboardData?.target_role?.title || "Leadership Track"}</strong></span>
-                      <span>Schedule: <strong style={{ color: "#fff" }}>{employeeProfile?.learning_schedule || "Flexible"}</strong></span>
+                      <span>Schedule: <strong style={{ color: "var(--text-primary)" }}>{employeeProfile?.learning_schedule || "Flexible"}</strong></span>
                       <span>Intent: <strong style={{ color: "var(--accent-cyan)" }}>{employeeProfile?.career_change_intent || "Active Growth"}</strong></span>
                     </div>
                   </div>
@@ -2012,7 +1995,7 @@ export default function App() {
                     <Shield size={24} color="var(--primary)" style={{ marginTop: 2, flexShrink: 0 }} />
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#fff", margin: 0 }}>Private Career Goal</h3>
+                        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>Private Career Goal</h3>
                         <span className="badge badge-verified" style={{ fontSize: "0.7rem" }}><Lock size={10} style={{ marginRight: 3 }} /> CONFIDENTIAL TO YOU</span>
                       </div>
                       <p style={{ fontSize: "0.9rem", color: "var(--accent-cyan)", margin: "4px 0 0 0", fontWeight: 500 }}>
@@ -2050,7 +2033,7 @@ export default function App() {
                       <Sparkles size={22} color="var(--accent-emerald)" />
                       <div>
                         <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-emerald)", textTransform: "uppercase" }}>Recommended Next Career Action</div>
-                        <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff" }}>{dashboardData.next_action.title}</div>
+                        <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>{dashboardData.next_action.title}</div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{dashboardData.next_action.description}</div>
                       </div>
                     </div>
@@ -2088,7 +2071,7 @@ export default function App() {
 
                   <div className="glass-panel" style={{ padding: 18 }}>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Roadmap Completion</div>
-                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", marginTop: 4 }}>
+                    <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
                       {roadmapData?.completed_topics || 0} / {roadmapData?.total_topics || 0}
                     </div>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
@@ -2112,7 +2095,7 @@ export default function App() {
                   {/* Left Column: Target Competencies & Transferable Skills */}
                   <div className="glass-panel" style={{ padding: 20 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                         Target Competency Snapshot ({gapData?.skill_details?.length || 0})
                       </h3>
                       <button onClick={() => setEmployeeTab("transition")} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px" }}>
@@ -2124,7 +2107,7 @@ export default function App() {
                       {gapData?.skill_details?.slice(0, 5).map((item, idx) => (
                         <div key={idx} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{item.skill.canonical_name}</div>
+                            <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.85rem" }}>{item.skill.canonical_name}</div>
                             <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Target Competency</div>
                           </div>
                           <span className={`badge badge-${item.status}`}>{item.status.toUpperCase()}</span>
@@ -2136,7 +2119,7 @@ export default function App() {
                   {/* Right Column: Scheduled Advisory & Top Opportunities */}
                   <div className="glass-panel" style={{ padding: 20 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                         Leadership Opportunities Radar ({jobMatches.length})
                       </h3>
                       <button onClick={() => setEmployeeTab("jobs")} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px" }}>
@@ -2148,7 +2131,7 @@ export default function App() {
                       {jobMatches.slice(0, 3).map((jm, i) => (
                         <div key={i} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{jm.job.title}</div>
+                            <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.85rem" }}>{jm.job.title}</div>
                             <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
                           </div>
                           <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
@@ -2171,7 +2154,7 @@ export default function App() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
                       <div>
                         <span className="badge badge-verified" style={{ marginBottom: 6 }}>CAREER SWITCH & PROMOTION ESTIMATION</span>
-                        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                           {transitionAnalysis.current_role} → {transitionAnalysis.target_role}
                         </h2>
                       </div>
@@ -2195,7 +2178,7 @@ export default function App() {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
                       {/* Column 1: Direct Transferable */}
                       <div style={{ padding: 16, borderRadius: 10, background: "rgba(16, 185, 129, 0.05)", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                        <div style={{ fontWeight: 700, color: "#34d399", marginBottom: 8, fontSize: "0.9rem" }}>
+                        <div style={{ fontWeight: 700, color: "var(--accent-emerald)", marginBottom: 8, fontSize: "0.9rem" }}>
                           ✓ Direct Transferable Skills ({transitionAnalysis.transferable_skills?.length || 0}):
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -2210,7 +2193,7 @@ export default function App() {
 
                       {/* Column 2: Needs Stronger Evidence */}
                       <div style={{ padding: 16, borderRadius: 10, background: "rgba(245, 158, 11, 0.05)", border: "1px solid rgba(245, 158, 11, 0.2)" }}>
-                        <div style={{ fontWeight: 700, color: "#fbbf24", marginBottom: 8, fontSize: "0.9rem" }}>
+                        <div style={{ fontWeight: 700, color: "var(--accent-warning)", marginBottom: 8, fontSize: "0.9rem" }}>
                           ⚡ Needs Stronger Evidence:
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -2225,7 +2208,7 @@ export default function App() {
 
                       {/* Column 3: Skill Gaps to Close */}
                       <div style={{ padding: 16, borderRadius: 10, background: "rgba(244, 63, 94, 0.05)", border: "1px solid rgba(244, 63, 94, 0.2)" }}>
-                        <div style={{ fontWeight: 700, color: "#fda4af", marginBottom: 8, fontSize: "0.9rem" }}>
+                        <div style={{ fontWeight: 700, color: "var(--accent-danger-text)", marginBottom: 8, fontSize: "0.9rem" }}>
                           ✕ Skill Gaps to Close ({transitionAnalysis.missing_skills?.length || 0}):
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -2245,7 +2228,7 @@ export default function App() {
                 <div className="glass-panel" style={{ padding: 24 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
                     <div>
-                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                         Real-World Practical Role Tasks (Tier 4 Project Verification)
                       </h3>
                       <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
@@ -2258,7 +2241,7 @@ export default function App() {
                     {roleTasks.map((t) => (
                       <div key={t.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{t.title}</div>
+                          <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{t.title}</div>
                           <span className="badge badge-verified">Rubric Validated</span>
                         </div>
                         <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 6 }}>{t.prompt_text}</p>
@@ -2309,7 +2292,7 @@ export default function App() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
                     <div>
                       <span className="badge badge-verified" style={{ marginBottom: 6 }}>ADAPTIVE EXECUTIVE ROADMAP</span>
-                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                         Sequential Learning & Verification Milestones
                       </h2>
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0 0 0" }}>
@@ -2385,7 +2368,7 @@ export default function App() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
                     <div>
                       <span className="badge badge-verified" style={{ marginBottom: 6 }}>VERIFIABLE EVIDENCE MATRIX</span>
-                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff", margin: 0 }}>
+                      <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                         Professional Skill Passport & Evidence Records ({myEvidence.length})
                       </h2>
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: "4px 0 0 0" }}>
@@ -2433,7 +2416,7 @@ export default function App() {
                           <div key={ev.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10 }}>
                             <div>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                                <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff" }}>
+                                <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)" }}>
                                   {ev.skill?.canonical_name || ev.skill_name || "Technical Competency"}
                                 </div>
                                 <span className={`badge badge-${['mentor_endorsed', 'assessed', 'project'].includes(et) ? 'verified' : et === 'resume_extracted' ? 'synthetic' : 'self-reported'}`}>
@@ -2463,7 +2446,7 @@ export default function App() {
                               <button
                                 onClick={() => handleDeleteEvidence(ev.id)}
                                 className="btn btn-secondary"
-                                style={{ padding: "4px 8px", fontSize: "0.72rem", color: "#fda4af" }}
+                                style={{ padding: "4px 8px", fontSize: "0.72rem", color: "var(--accent-danger-text)" }}
                               >
                                 <Trash2 size={12} /> Delete
                               </button>
@@ -2481,7 +2464,7 @@ export default function App() {
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <Shield size={20} color="var(--primary)" />
-                        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                           Cryptographic Skill Passport: {passport.passport_id}
                         </h3>
                         <span className={`badge ${passport.is_revoked ? "badge-gap" : "badge-verified"}`}>
@@ -2509,25 +2492,53 @@ export default function App() {
               </div>
             )}
 
-            {/* ════════ SUBTAB 5: EXECUTIVE ATS RESUME ════════ */}
+            {/* ════════ SUBTAB 5: EXECUTIVE ATS RESUME & BUILDER ════════ */}
             {employeeTab === "resume" && (
-              <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Sparkles size={22} color="var(--primary)" />
-                  <div>
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-                      Executive ATS Resume & Experience Scanner
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
-                      Strictly fact-based: extracted candidate skills will <strong>never</strong> enter your verified profile until you confirm them.
-                    </p>
-                  </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Mode Selector Toggle */}
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                  <button
+                    onClick={() => setResumeMode("builder")}
+                    className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <FileText size={15} /> AI Executive Resume Builder
+                  </button>
+                  <button
+                    onClick={() => setResumeMode("scanner")}
+                    className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> ATS Scanner & Experience Parser
+                  </button>
                 </div>
+
+                {resumeMode === "builder" ? (
+                  <ResumeBuilder
+                    user={user}
+                    studentProfile={studentProfile}
+                    employeeProfile={employeeProfile}
+                    targetRole={dashboardData?.target_role || { title: employeeProfile?.current_role || "Leadership Candidate" }}
+                    myEvidence={myEvidence}
+                  />
+                ) : (
+                  <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Sparkles size={22} color="var(--primary)" />
+                      <div>
+                        <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                          Executive ATS Resume & Experience Scanner
+                        </h3>
+                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                          Strictly fact-based: extracted candidate skills will <strong>never</strong> enter your verified profile until you confirm them.
+                        </p>
+                      </div>
+                    </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
                   {/* Upload Box */}
                   <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px dashed var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
                       <UploadCloud size={18} color="var(--accent-cyan)" /> Upload Executive Resume (PDF, DOCX, TXT)
                     </div>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
@@ -2545,7 +2556,7 @@ export default function App() {
 
                   {/* Manual Paste Box */}
                   <div style={{ padding: 18, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
                       <FileText size={18} color="var(--accent-emerald)" /> Or Paste Resume / Experience Text
                     </div>
                     <textarea
@@ -2592,7 +2603,7 @@ export default function App() {
                               style={{ marginTop: 3 }}
                             />
                             <div>
-                              <div style={{ fontWeight: 700, color: "#fff" }}>{sk.skill}</div>
+                              <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{sk.skill}</div>
                               <div style={{ color: "var(--accent-cyan)", fontSize: "0.75rem" }}>{Math.round((sk.confidence || 0.8) * 100)}% match confidence</div>
                               {sk.matched_span && <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: 2 }}>matched: "{sk.matched_span}"</div>}
                             </div>
@@ -2603,7 +2614,7 @@ export default function App() {
 
                     {atsSuggestions.length > 0 && (
                       <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#fff", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
+                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
                         <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
                           {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
                         </ul>
@@ -2614,7 +2625,7 @@ export default function App() {
 
                 {/* Uploaded Resumes on File Management */}
                 <div style={{ marginTop: 8 }}>
-                  <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                     <FileText size={16} color="var(--primary)" /> Executive Resumes Stored ({uploadedResumes.length})
                   </h4>
                   {uploadedResumes.length === 0 ? (
@@ -2624,7 +2635,7 @@ export default function App() {
                       {uploadedResumes.map((r) => (
                         <div key={r.id} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                           <div>
-                            <div style={{ fontWeight: 600, color: "#fff", fontSize: "0.85rem" }}>{r.filename}</div>
+                            <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.85rem" }}>{r.filename}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                               Target Role: {r.target_role || "Leadership"} · Uploaded: {new Date(r.created_at).toLocaleDateString()}
                             </div>
@@ -2633,7 +2644,7 @@ export default function App() {
                             onClick={() => handleDeleteResume(r.id)}
                             disabled={actionLoading}
                             className="btn btn-secondary"
-                            style={{ fontSize: "0.75rem", padding: "4px 10px", color: "#fda4af" }}
+                            style={{ fontSize: "0.75rem", padding: "4px 10px", color: "var(--accent-danger-text)" }}
                             title="Securely delete resume file"
                           >
                             <Trash2 size={13} /> Delete File
@@ -2645,6 +2656,8 @@ export default function App() {
                 </div>
               </div>
             )}
+          </div>
+        )}
 
             {/* ════════ SUBTAB 6: OPPORTUNITIES RADAR & TRACKER ════════ */}
             {employeeTab === "jobs" && (
@@ -2662,7 +2675,7 @@ export default function App() {
                       {savedJobs.map((item) => (
                         <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
                             {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
                           </div>
@@ -2684,7 +2697,7 @@ export default function App() {
                             <button
                               onClick={() => handleDeleteSavedOpportunity(item.id)}
                               className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "#fda4af" }}
+                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
                               title="Remove opportunity from tracking"
                             >
                               ✕ Remove
@@ -2707,7 +2720,7 @@ export default function App() {
                       <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{jm.job.title}</div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
                             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
                           </div>
                           <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
@@ -2744,7 +2757,7 @@ export default function App() {
                       <div key={m.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "#fff" }}>{m.user?.full_name || "Executive Mentor"}</div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{m.user?.full_name || "Executive Mentor"}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)" }}>{m.years_experience} Years Exp · {m.languages?.join(", ") || "English"}</div>
                           </div>
                           <span className="badge badge-verified">Verified</span>
@@ -2779,7 +2792,7 @@ export default function App() {
                       {myBookings.map((b) => (
                         <div key={b.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.9rem" }}>{b.offering?.title || `Session #${b.id}`}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                               Scheduled: {new Date(b.scheduled_at).toLocaleString()} · Status: <span style={{ color: b.status === "confirmed" ? "var(--accent-emerald)" : "var(--accent-rose)", fontWeight: 600 }}>{b.status.toUpperCase()}</span>
                             </div>
@@ -2794,7 +2807,7 @@ export default function App() {
                               onClick={() => handleCancelBooking(b.id)}
                               disabled={actionLoading}
                               className="btn btn-secondary"
-                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "#fda4af" }}
+                              style={{ fontSize: "0.75rem", padding: "6px 12px", color: "var(--accent-danger-text)" }}
                             >
                               Cancel Session
                             </button>
@@ -2819,6 +2832,9 @@ export default function App() {
               <button className={`subtab-btn ${sellerTab === "courses" ? "active" : ""}`} onClick={() => setSellerTab("courses")}>
                 <BookOpen size={16} /> Course Lifecycle Management ({sellerCourses.length})
               </button>
+              <button className={`subtab-btn ${sellerTab === "demand" ? "active" : ""}`} onClick={() => setSellerTab("demand")}>
+                <Sparkles size={16} /> Demand Intelligence & Catalog Gaps
+              </button>
               <button className={`subtab-btn ${sellerTab === "ledger" ? "active" : ""}`} onClick={() => setSellerTab("ledger")}>
                 <DollarSign size={16} /> Revenue, Commissions & Payouts
               </button>
@@ -2830,8 +2846,8 @@ export default function App() {
                 <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
                   <div>
                     <span className="badge badge-verified" style={{ marginBottom: 6 }}>VERIFIED COURSE SELLER</span>
-                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff" }}>
-                      DataOrbit Academy
+                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)" }}>
+                      {user?.full_name || "DataOrbit Academy"}
                     </h1>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
                       Lifecycle state machine: Draft → Submit for Moderation → Published → Paused → Archived
@@ -2853,7 +2869,7 @@ export default function App() {
                       <div key={c.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                         <div>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>{c.title}</span>
+                            <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>{c.title}</span>
                             <span className={`badge badge-${c.status === 'published' ? 'verified' : c.status === 'pending_review' ? 'self-reported' : 'quarantined'}`}>
                               {c.status.toUpperCase()}
                             </span>
@@ -2896,7 +2912,7 @@ export default function App() {
                 <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <span className="badge badge-verified" style={{ marginBottom: 6 }}>CREATOR MONETIZATION</span>
-                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff" }}>
+                    <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)" }}>
                       Creator Revenue Split: 85% Creator / 15% Platform
                     </h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
@@ -2919,7 +2935,7 @@ export default function App() {
                       {sellerPayouts.map((p) => (
                         <div key={p.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between" }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff" }}>Payout #{p.id} · ₹{p.amount}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>Payout #{p.id} · ₹{p.amount}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.payout_details}</div>
                           </div>
                           <span className="badge badge-verified">{p.status.toUpperCase()}</span>
@@ -2943,6 +2959,9 @@ export default function App() {
               <button className={`subtab-btn ${mentorTab === "bookings" ? "active" : ""}`} onClick={() => setMentorTab("bookings")}>
                 <Calendar size={16} /> Mentorship Bookings & Sessions ({myBookings.length})
               </button>
+              <button className={`subtab-btn ${mentorTab === "intelligence" ? "active" : ""}`} onClick={() => setMentorTab("intelligence")}>
+                <Sparkles size={16} /> Mentor Intelligence & Analytics
+              </button>
               <button className={`subtab-btn ${mentorTab === "availability" ? "active" : ""}`} onClick={() => setMentorTab("availability")}>
                 <Clock size={16} /> Availability Schedule ({mentorAvailability.length} slots)
               </button>
@@ -2956,8 +2975,8 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div className="glass-panel" style={{ padding: 24 }}>
                   <span className="badge badge-verified" style={{ marginBottom: 6 }}>MENTOR WORKFLOW</span>
-                  <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff" }}>
-                    Dr. Aris Thorne
+                  <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)" }}>
+                    {user?.full_name || "Dr. Aris Thorne"}
                   </h1>
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
                     Automated sandbox meeting links and RFC 5545 calendar integration.
@@ -2977,7 +2996,7 @@ export default function App() {
                         <div key={b.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>Booking #{b.id}</span>
+                              <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>Booking #{b.id}</span>
                               <span className={`badge badge-${b.status === 'confirmed' ? 'verified' : b.status === 'pending' ? 'self-reported' : 'quarantined'}`}>
                                 {b.status.toUpperCase()}
                               </span>
@@ -2995,6 +3014,9 @@ export default function App() {
                           </div>
 
                           <div style={{ display: "flex", gap: 8 }}>
+                            <button onClick={() => setPreviewBooking(b)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }} title="Preview Learner Skill Passport">
+                              <Eye size={13} /> Inspect Profile
+                            </button>
                             {b.status === "pending" && (
                               <>
                                 <button onClick={() => handleUpdateMentorBookingStatus(b.id, "confirmed")} className="btn btn-primary" style={{ fontSize: "0.75rem" }}>
@@ -3057,10 +3079,10 @@ export default function App() {
                     {mentorAvailability.map((slot) => (
                       <div key={slot.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
-                          <div style={{ fontWeight: 700, color: "#fff" }}>{slot.day_of_week}</div>
+                          <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{slot.day_of_week}</div>
                           <div style={{ fontSize: "0.8rem", color: "var(--accent-cyan)" }}>{slot.start_time} - {slot.end_time}</div>
                         </div>
-                        <button onClick={() => handleDeleteSlot(slot.id)} style={{ background: "transparent", border: "none", color: "#fda4af", cursor: "pointer" }}>
+                        <button onClick={() => handleDeleteSlot(slot.id)} style={{ background: "transparent", border: "none", color: "var(--accent-danger-text)", cursor: "pointer" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -3155,7 +3177,7 @@ export default function App() {
                       <div key={item.id} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <div style={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>{item.title}</div>
+                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>{item.title}</div>
                             <div style={{ fontSize: "0.75rem", color: "var(--accent-cyan)" }}>Type: {item.content_type} · Submitted by User #{item.user_id}</div>
                             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 6 }}>{item.description}</p>
                           </div>
@@ -3208,7 +3230,7 @@ export default function App() {
                     {adminUsers.map((u) => (
                       <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                         <td style={{ padding: "10px 12px" }}>#{u.id}</td>
-                        <td style={{ padding: "10px 12px", fontWeight: 600, color: "#fff" }}>{u.full_name}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 600, color: "var(--text-primary)" }}>{u.full_name}</td>
                         <td style={{ padding: "10px 12px", color: "var(--text-secondary)" }}>{u.email}</td>
                         <td style={{ padding: "10px 12px" }}><span className="badge badge-verified">{u.role}</span></td>
                         <td style={{ padding: "10px 12px" }}>
@@ -3245,7 +3267,7 @@ export default function App() {
                     {adminReports.map((r) => (
                       <div key={r.id} style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
-                          <div style={{ fontWeight: 700, color: "#fff" }}>Report #{r.id} · {r.reason}</div>
+                          <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>Report #{r.id} · {r.reason}</div>
                           <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Reported by User #{r.reporter_id} · Details: {r.details}</div>
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
@@ -3266,7 +3288,7 @@ export default function App() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
                     <div className="glass-panel" style={{ padding: 18 }}>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>TOTAL REGISTERED USERS</div>
-                      <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#fff" }}>{adminMetrics.total_users}</div>
+                      <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)" }}>{adminMetrics.total_users}</div>
                     </div>
                     <div className="glass-panel" style={{ padding: 18 }}>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>PUBLISHED COURSES</div>
@@ -3321,7 +3343,7 @@ export default function App() {
                 <div className="glass-panel" style={{ padding: 24 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                     <Shield size={24} color="var(--primary)" />
-                    <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#ffffff" }}>
+                    <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)" }}>
                       Authoritative Data Usage Register & Governance Matrix
                     </h1>
                   </div>
@@ -3333,7 +3355,7 @@ export default function App() {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginTop: 16 }}>
                       <div style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>FILES ACCOUNTED FOR</div>
-                        <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff" }}>{registerSummary.total_files_accounted_for} / 28</div>
+                        <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)" }}>{registerSummary.total_files_accounted_for} / 28</div>
                       </div>
                       <div style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>TOTAL RAW ROWS AUDITED</div>
@@ -3362,7 +3384,7 @@ export default function App() {
                     <tbody>
                       {registerRecords.map((r, i) => (
                         <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                          <td style={{ padding: "10px 12px", fontWeight: 600, color: "#fff" }}>{r.source_filename}</td>
+                          <td style={{ padding: "10px 12px", fontWeight: 600, color: "var(--text-primary)" }}>{r.source_filename}</td>
                           <td style={{ padding: "10px 12px", fontFamily: "monospace", color: "var(--text-muted)" }}>{r.sha256_hash?.slice(0, 12)}...</td>
                           <td style={{ padding: "10px 12px" }}>{r.raw_row_count ? r.raw_row_count.toLocaleString() : "—"}</td>
                           <td style={{ padding: "10px 12px", color: "var(--accent-emerald)", fontWeight: 700 }}>{r.processed_row_count ? r.processed_row_count.toLocaleString() : "0"}</td>
@@ -3391,7 +3413,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>PRACTICAL ASSESSMENT</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>{activeQuiz.title}</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>{activeQuiz.title}</h2>
               </div>
               <button onClick={() => setQuizModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
@@ -3403,7 +3425,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {activeQuiz.questions?.map((q, qIdx) => (
                 <div key={q.id} style={{ padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
-                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#fff", marginBottom: 12 }}>
+                  <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-primary)", marginBottom: 12 }}>
                     {qIdx + 1}. {q.question}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -3436,14 +3458,14 @@ export default function App() {
             </div>
 
             {quizResult && (
-              <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: quizResult.passed ? "rgba(16, 185, 129, 0.15)" : "rgba(244, 63, 94, 0.15)", border: quizResult.passed ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(244, 63, 94, 0.3)" }}>
-                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: quizResult.passed ? "#34d399" : "#fda4af" }}>
+              <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: quizResult.passed ? "var(--accent-success-bg)" : "var(--accent-danger-bg)", border: quizResult.passed ? "1px solid var(--accent-success-border)" : "1px solid var(--accent-danger-border)" }}>
+                <div style={{ fontWeight: 800, fontSize: "1.1rem", color: quizResult.passed ? "var(--accent-emerald)" : "var(--accent-danger-text)" }}>
                   {quizResult.passed ? "🎉 Assessment Passed!" : "⚠️ Assessment Failed"}
                 </div>
-                <div style={{ fontSize: "0.875rem", marginTop: 4, color: "#fff" }}>
+                <div style={{ fontSize: "0.875rem", marginTop: 4, color: "var(--text-primary)" }}>
                   Score: <strong>{Math.round(quizResult.score * 100)}%</strong> (Required: {Math.round(activeQuiz.pass_threshold * 100)}%)
                 </div>
-                <p style={{ fontSize: "0.8rem", color: quizResult.passed ? "#a7f3d0" : "#fecdd3", marginTop: 6 }}>
+                <p style={{ fontSize: "0.8rem", color: quizResult.passed ? "var(--accent-emerald)" : "var(--accent-danger-text)", marginTop: 6 }}>
                   {quizResult.passed
                     ? "Proficiency verified and recorded on your learner profile! The next sequential topic in your roadmap has been unlocked."
                     : `Weak areas detected: ${quizResult.weak_areas?.join(", ") || "Core concepts"}. Review recommended learning resources before retrying.`}
@@ -3476,7 +3498,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>TOPIC STUDY DECK</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>{studyMaterials.topic_title}</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>{studyMaterials.topic_title}</h2>
               </div>
               <button onClick={() => setStudyModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
@@ -3508,7 +3530,7 @@ export default function App() {
                   <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--accent-cyan)", marginBottom: 8, fontWeight: 700 }}>
                     {cardFlipped ? "Answer / Explanation" : "Question / Concept"}
                   </div>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
                     {cardFlipped
                       ? studyMaterials.flashcards[activeCardIndex]?.back
                       : studyMaterials.flashcards[activeCardIndex]?.front}
@@ -3546,7 +3568,7 @@ export default function App() {
 
             {studyMaterials.study_notes && (
               <div style={{ marginTop: 24, padding: 16, borderRadius: 10, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-subtle)" }}>
-                <div style={{ fontWeight: 700, color: "#fff", marginBottom: 6 }}>Key Study Notes:</div>
+                <div style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>Key Study Notes:</div>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{studyMaterials.study_notes}</p>
               </div>
             )}
@@ -3559,7 +3581,7 @@ export default function App() {
         <div className="modal-overlay">
           <div className="modal-dialog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Submit Practical Project Proof</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Submit Practical Project Proof</h2>
               <button onClick={() => setProjectModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
@@ -3623,13 +3645,13 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>CRYPTOGRAPHIC PASSPORT</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>{publicPassportData.full_name}'s Skill Passport</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>{publicPassportData.full_name}'s Skill Passport</h2>
               </div>
               <button onClick={() => setPublicPassportModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
             {publicPassportData.is_revoked ? (
-              <div style={{ padding: 18, borderRadius: 12, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5" }}>
+              <div style={{ padding: 18, borderRadius: 12, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "var(--accent-danger-text)" }}>
                 <AlertTriangle size={20} />
                 <div style={{ fontWeight: 800, fontSize: "1.1rem", marginTop: 6 }}>Credential Revoked</div>
                 <p style={{ fontSize: "0.85rem", marginTop: 4 }}>This Skill Passport has been revoked by the holder or platform compliance.</p>
@@ -3638,17 +3660,17 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div style={{ padding: 16, borderRadius: 12, background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontWeight: 800, color: "#34d399", fontSize: "1.1rem" }}>Status: Active & Verified</div>
+                    <div style={{ fontWeight: 800, color: "var(--accent-emerald)", fontSize: "1.1rem" }}>Status: Active & Verified</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Role: {publicPassportData.target_role || "Data Analyst"}</div>
                   </div>
-                  <CheckCircle2 size={24} color="#34d399" />
+                  <CheckCircle2 size={24} color="var(--accent-emerald)" />
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>Demonstrated Evidence-Backed Skills:</div>
+                  <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>Demonstrated Evidence-Backed Skills:</div>
                   {publicPassportData.verified_skills?.map((s, idx) => (
                     <div key={idx} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontWeight: 600, color: "#fff" }}>{s.skill_name}</span>
+                      <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{s.skill_name}</span>
                       <span className="badge badge-verified">{s.evidence_type} ({Math.round(s.confidence_score * 100)}%)</span>
                     </div>
                   ))}
@@ -3666,7 +3688,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>IDEMPOTENT LEDGER</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Credits & Ledger Balance</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Credits & Ledger Balance</h2>
               </div>
               <button onClick={() => setWalletModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
@@ -3676,22 +3698,22 @@ export default function App() {
                 <div style={{ padding: 20, borderRadius: 14, background: "rgba(99, 102, 241, 0.15)", border: "1px solid var(--primary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: "0.8rem", color: "var(--accent-cyan)", fontWeight: 700 }}>AVAILABLE BALANCE</div>
-                    <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#fff" }}>{creditBalance.available_balance} Credits</div>
+                    <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "var(--text-primary)" }}>{creditBalance.available_balance} Credits</div>
                   </div>
                   <button onClick={handleGrantBonusCredits} disabled={actionLoading} className="btn btn-primary">
                     + Grant 50 Sandbox Credits
                   </button>
                 </div>
 
-                <div style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>Ledger Activity Log:</div>
+                <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>Ledger Activity Log:</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 220, overflowY: "auto" }}>
                   {creditBalance.recent_transactions?.map((tx, idx) => (
                     <div key={idx} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
                       <div>
-                        <div style={{ fontWeight: 600, color: "#fff" }}>{tx.description}</div>
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{tx.description}</div>
                         <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{new Date(tx.created_at).toLocaleString()}</div>
                       </div>
-                      <span style={{ fontWeight: 700, color: tx.amount > 0 ? "#34d399" : "#fda4af" }}>
+                      <span style={{ fontWeight: 700, color: tx.amount > 0 ? "var(--accent-emerald)" : "var(--accent-danger-text)" }}>
                         {tx.amount > 0 ? `+${tx.amount}` : tx.amount}
                       </span>
                     </div>
@@ -3708,13 +3730,13 @@ export default function App() {
         <div className="modal-overlay">
           <div className="modal-dialog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Privacy & GDPR Controls</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Privacy & GDPR Controls</h2>
               <button onClick={() => setPrivacyModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: "0.85rem", color: "#fff" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: "0.85rem", color: "var(--text-primary)" }}>
                   <input
                     type="checkbox"
                     checked={privacySettings.hide_current_employer}
@@ -3726,7 +3748,7 @@ export default function App() {
 
               <div style={{ padding: 16, borderRadius: 10, background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: "#fff" }}>Export All Personal Data (GDPR Article 20)</div>
+                  <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>Export All Personal Data (GDPR Article 20)</div>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Download a machine-readable JSON archive of your entire profile and evidence.</div>
                 </div>
                 <button onClick={handleExportData} disabled={actionLoading} className="btn btn-secondary">
@@ -3736,7 +3758,7 @@ export default function App() {
 
               <div style={{ padding: 16, borderRadius: 10, background: "rgba(244, 63, 94, 0.08)", border: "1px solid rgba(244, 63, 94, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: "#fda4af" }}>Permanent Account Deletion (Right to be Forgotten)</div>
+                  <div style={{ fontWeight: 700, color: "var(--accent-danger-text)" }}>Permanent Account Deletion (Right to be Forgotten)</div>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Irrevocably erases personal records, tokens, and evidence history.</div>
                 </div>
                 <button
@@ -3767,7 +3789,7 @@ export default function App() {
         <div className="modal-overlay">
           <div className="modal-dialog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Create Course Listing</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Create Course Listing</h2>
               <button onClick={() => setNewCourseModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
@@ -3842,7 +3864,7 @@ export default function App() {
         <div className="modal-overlay">
           <div className="modal-dialog">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Endorse Learner Skill (Verified 5th Tier)</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Endorse Learner Skill (Verified 5th Tier)</h2>
               <button onClick={() => setEndorseModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
@@ -3894,14 +3916,14 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>SANDBOX CHECKOUT</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Purchase {checkoutCourse.title}</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Purchase {checkoutCourse.title}</h2>
               </div>
               <button onClick={() => setCheckoutModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "#fff" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "var(--text-primary)" }}>
                   <span>Course Price:</span>
                   <span>₹{checkoutCourse.price}</span>
                 </div>
@@ -3937,7 +3959,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
                 <span className="badge badge-verified" style={{ marginBottom: 4 }}>MENTORSHIP BOOKING</span>
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>{bookingOffering.title}</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>{bookingOffering.title}</h2>
               </div>
               <button onClick={() => setBookingModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
             </div>
@@ -3954,7 +3976,7 @@ export default function App() {
                 />
               </div>
 
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "0.82rem", color: "#e2e8f0", cursor: "pointer", background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "0.82rem", color: "var(--text-primary)", cursor: "pointer", background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
                 <input
                   type="checkbox"
                   checked={mentorShareConsent}

@@ -581,7 +581,7 @@ export default function LandingPage({ onOpenAuth, theme, toggleTheme, onQuickLog
 
             <div className="glass-panel" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span className="badge badge-verified" style={{ background: "var(--primary)", color: "#fff" }}>TIER 5 (0.95)</span>
+                <span className="badge badge-verified" style={{ background: "var(--primary)", color: "var(--primary-text)" }}>TIER 5 (0.95)</span>
                 <div>
                   <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>Verified Mentor Endorsement</h4>
                   <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>Validated in a live 1-on-1 advisory or mock interview session by a verified industry mentor.</p>

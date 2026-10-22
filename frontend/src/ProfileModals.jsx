@@ -59,13 +59,13 @@ export function EditStudentProfileModal({ isOpen, onClose, profile, careerRoles,
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <GraduationCap size={22} color="var(--primary)" />
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Edit Student Profile & Target Goal</h2>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Edit Student Profile & Target Goal</h2>
           </div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
         </div>
 
         {error && (
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5", fontSize: "0.85rem", marginBottom: 14 }}>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--accent-danger-bg)", border: "1px solid var(--accent-danger-border)", color: "var(--accent-danger-text)", fontSize: "0.85rem", marginBottom: 14 }}>
             {error}
           </div>
         )}
@@ -246,21 +246,21 @@ export function EditEmployeeProfileModal({ isOpen, onClose, profile, careerRoles
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Briefcase size={22} color="var(--primary)" />
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Edit Professional Profile & Goals</h2>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Edit Professional Profile & Goals</h2>
           </div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
         </div>
 
         {/* Privacy Isolation Alert Banner */}
-        <div style={{ padding: 12, borderRadius: 10, background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14 }}>
-          <Shield size={18} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div style={{ padding: 12, borderRadius: 10, background: "var(--accent-success-bg)", border: "1px solid var(--accent-success-border)", display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14 }}>
+          <Shield size={18} color="var(--accent-emerald)" style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            <strong style={{ color: "#34d399" }}>Strict Enterprise Privacy Guarantee:</strong> Your career transition goals, intent, and progress are stored in a private profile partition. Employers, recruiters, sellers, and mentors cannot inspect your goals without your explicit, revocable consent.
+            <strong style={{ color: "var(--accent-emerald)" }}>Strict Enterprise Privacy Guarantee:</strong> Your career transition goals, intent, and progress are stored in a private profile partition. Employers, recruiters, sellers, and mentors cannot inspect your goals without your explicit, revocable consent.
           </div>
         </div>
 
         {error && (
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5", fontSize: "0.85rem", marginBottom: 14 }}>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--accent-danger-bg)", border: "1px solid var(--accent-danger-border)", color: "var(--accent-danger-text)", fontSize: "0.85rem", marginBottom: 14 }}>
             {error}
           </div>
         )}
@@ -377,7 +377,7 @@ export function EditEmployeeProfileModal({ isOpen, onClose, profile, careerRoles
 
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <label style={{ fontSize: "0.8rem", color: "#34d399", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+              <label style={{ fontSize: "0.8rem", color: "var(--accent-emerald)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
                 <Lock size={13} /> Private Career Goal (Visible ONLY to You)
               </label>
               <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Strictly Confidential</span>
@@ -435,7 +435,7 @@ export function AddSelfSkillModal({ isOpen, onClose, allSkills, onSaved }) {
     <div className="modal-overlay">
       <div className="modal-dialog" style={{ maxWidth: 500 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>Add Self-Reported Skill</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>Add Self-Reported Skill</h2>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
         </div>
 
@@ -444,7 +444,7 @@ export function AddSelfSkillModal({ isOpen, onClose, allSkills, onSaved }) {
         </div>
 
         {error && (
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5", fontSize: "0.85rem", marginBottom: 14 }}>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--accent-danger-bg)", border: "1px solid var(--accent-danger-border)", color: "var(--accent-danger-text)", fontSize: "0.85rem", marginBottom: 14 }}>
             {error}
           </div>
         )}
@@ -539,14 +539,14 @@ export function EditEvidenceModal({ isOpen, onClose, evidence, onSaved }) {
     <div className="modal-overlay">
       <div className="modal-dialog" style={{ maxWidth: 500 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)" }}>
             Edit Evidence: {evidence.skill?.canonical_name || "Skill"}
           </h2>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: "1.2rem", cursor: "pointer" }}>✕</button>
         </div>
 
         {error && (
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(244, 63, 94, 0.15)", border: "1px solid rgba(244, 63, 94, 0.3)", color: "#fca5a5", fontSize: "0.85rem", marginBottom: 14 }}>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--accent-danger-bg)", border: "1px solid var(--accent-danger-border)", color: "var(--accent-danger-text)", fontSize: "0.85rem", marginBottom: 14 }}>
             {error}
           </div>
         )}

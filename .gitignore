@@ -28,10 +28,6 @@ frontend/build/
 # === Data (large files, not tracked) ===
 _raw_data/
 *.zip
-*.csv
-*.xlsx
-!backend/seed/demo_*.csv
-
 # === Model artifacts ===
 backend/ml/artifacts/*.joblib
 backend/ml/artifacts/*.pkl
