@@ -438,3 +438,71 @@ export const getResumeAnalysisHistory = () => apiRequest("/resume-analyzer/histo
 export const getResumeAnalysisReport = (id) => apiRequest(`/resume-analyzer/report/${id}`);
 export const getSupportedRoles = () => apiRequest("/resume-analyzer/roles");
 
+// ─── AI Resume Builder ───
+export const getResumeBuilderProfileContext = (targetRole = "") =>
+  apiRequest(`/resume-builder/profile-context${targetRole ? `?target_role=${encodeURIComponent(targetRole)}` : ""}`);
+
+export const inspectGitHubRepo = (repoUrl) =>
+  apiRequest("/resume-builder/inspect-github", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repo_url: repoUrl }),
+  });
+
+export const generateResumeData = (targetRole, qaAnswers, templateId = "modern", accentColor = "#0a66c2") =>
+  apiRequest("/resume-builder/generate-resume", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      target_role: targetRole,
+      qa_answers: qaAnswers,
+      template_id: templateId,
+      accent_color: accentColor,
+    }),
+  });
+
+export const saveResumeVersion = (payload) =>
+  apiRequest("/resume-builder/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+export const listSavedResumes = () => apiRequest("/resume-builder/list");
+
+export const getSavedResume = (id) => apiRequest(`/resume-builder/${id}`);
+
+export const deleteSavedResume = (id) =>
+  apiRequest(`/resume-builder/${id}`, { method: "DELETE" });
+
+export const quickATSCheck = (targetRole, resumeData) =>
+  apiRequest("/resume-builder/quick-ats-check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_role: targetRole, resume_data: resumeData }),
+  });
+
+export const downloadResumeDocx = async (resumeData) => {
+  const token = localStorage.getItem("growsphere_token");
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+  const res = await fetch(`${API_BASE}/resume-builder/export-docx`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(resumeData),
+  });
+  if (!res.ok) throw new Error("Failed to export DOCX document");
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const name = resumeData?.personal_info?.name || "Candidate";
+  a.download = `${name.replace(/\s+/g, "_")}_Resume.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+

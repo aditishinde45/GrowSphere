@@ -884,3 +884,23 @@ class ResumeAnalysis(Base):
 
     user = relationship("User")
 
+
+# ─── Saved AI Resume Builder Versions ─────────────────────────────────
+class SavedResume(Base):
+    __tablename__ = "saved_resumes"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    target_role = Column(String(200), nullable=False)
+    template_id = Column(String(50), default="modern")
+    accent_color = Column(String(20), default="#0a66c2")
+    resume_data = Column(JSON, nullable=False)
+    qa_answers = Column(JSON, nullable=True)
+    ats_score = Column(Integer, nullable=True)
+    role_suitability = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User")
+

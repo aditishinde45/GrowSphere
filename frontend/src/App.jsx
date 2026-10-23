@@ -1657,6 +1657,7 @@ export default function App() {
                     employeeProfile={employeeProfile}
                     targetRole={dashboardData?.target_role || { title: studentProfile?.target_role_title || "Data Analyst" }}
                     myEvidence={myEvidence}
+                    onNavigateToRoadmap={() => setStudentTab("roadmap")}
                   />
                 ) : (
                   <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -2603,6 +2604,7 @@ export default function App() {
                     employeeProfile={employeeProfile}
                     targetRole={dashboardData?.target_role || { title: employeeProfile?.current_role || "Leadership Candidate" }}
                     myEvidence={myEvidence}
+                    onNavigateToRoadmap={() => setEmployeeTab("roadmap")}
                   />
                 ) : (
                   <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
