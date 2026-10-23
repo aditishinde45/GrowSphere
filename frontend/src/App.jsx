@@ -3,11 +3,14 @@ import * as api from "./api";
 import LandingPage from "./LandingPage";
 import AuthModal from "./AuthModal";
 import ResumeBuilder from "./ResumeBuilder";
+import ATSResumeAnalyzer from "./ATSResumeAnalyzer";
 import MockInterviewStudio from "./MockInterviewStudio";
 import StudyNotesModal from "./StudyNotesModal";
 import SkillDemandRadar from "./SkillDemandRadar";
 import SellerDemandIntelligence from "./SellerDemandIntelligence";
 import { MentorIntelligenceView, LearnerProfilePreviewModal } from "./MentorIntelligence";
+import RoadmapHub from "./RoadmapHub";
+import OpportunityRadar from "./OpportunityRadar";
 
 import {
   EditStudentProfileModal,
@@ -23,7 +26,7 @@ import {
   Send, Share2, Trash2, Download, Eye, EyeOff, Clock, Video,
   UserPlus, PlusCircle, CheckSquare, XCircle, Activity, FileCheck,
   TrendingUp, Users, DollarSign, Settings, LogOut, Sun, Moon,
-  UploadCloud, Filter, Edit2, GraduationCap, ArrowRight
+  UploadCloud, Filter, Edit2, GraduationCap, ArrowRight, Target
 } from "lucide-react";
 
 // Pre-seeded role demo credentials for instant 1-click role testing in dev sandbox
@@ -37,6 +40,8 @@ const DEMO_USERS = {
 
 export default function App() {
   const [activeRole, setActiveRole] = useState("student");
+  const [topNavSection, setTopNavSection] = useState("workspace"); // "workspace" | "roadmaps"
+  const [studentRoadmapView, setStudentRoadmapView] = useState("personalized"); // "personalized" | "role_gap"
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -121,7 +126,7 @@ export default function App() {
 
   // AI Mock Interview Studio State
     // New Modular Feature States (PRD Sections 5.2, 5.4, 5.9, 5.10, 7.2, 8.3)
-  const [resumeMode, setResumeMode] = useState("builder"); // builder | scanner
+  const [resumeMode, setResumeMode] = useState("analyzer"); // analyzer | builder | scanner
   const [studyNotesTopic, setStudyNotesTopic] = useState(null);
   const [studyNotesMaterials, setStudyNotesMaterials] = useState(null);
   const [previewBooking, setPreviewBooking] = useState(null);
@@ -1060,21 +1065,63 @@ export default function App() {
               <span style={{ fontSize: "1.3rem", fontWeight: 800, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
                 Grow<span style={{ color: "var(--primary)" }}>Sphere</span>
               </span>
-              <span style={{ marginLeft: 8, fontSize: "0.65rem", padding: "2px 8px", borderRadius: 4, background: "var(--accent-success-bg)", color: "var(--accent-success)", fontWeight: 700, border: "1px solid var(--accent-success-border)" }}>
-                {user ? `${user.role.toUpperCase()} WORKSPACE` : "FULL PRODUCT"}
-              </span>
             </div>
+          </div>
+
+          {/* Dedicated Roadmaps & Workspace Top Navigation */}
+          <div style={{ display: "flex", alignItems: "center", background: "var(--badge-bg)", padding: 4, borderRadius: 10, border: "1px solid var(--border-subtle)", gap: 4 }}>
+            <button
+              onClick={() => setTopNavSection("workspace")}
+              style={{
+                padding: "6px 14px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                borderRadius: 7,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                background: topNavSection === "workspace" ? "var(--primary)" : "transparent",
+                color: topNavSection === "workspace" ? "#ffffff" : "var(--text-secondary)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Briefcase size={14} /> Workspace
+            </button>
+
+            <button
+              onClick={() => setTopNavSection("roadmaps")}
+              style={{
+                padding: "6px 14px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                borderRadius: 7,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                background: topNavSection === "roadmaps" ? "var(--primary)" : "transparent",
+                color: topNavSection === "roadmaps" ? "#ffffff" : "var(--text-secondary)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Compass size={14} /> Roadmaps
+            </button>
           </div>
 
           {/* Dev Sandbox Persona Switcher */}
           <div style={{ display: "flex", alignItems: "center", background: "var(--badge-bg)", padding: 4, borderRadius: 10, border: "1px solid var(--border-subtle)", gap: 4 }}>
-            <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700, padding: "0 4px" }}>[DEV TEST SWITCHER]</span>
             {Object.entries(DEMO_USERS).map(([key, item]) => {
-              const isActive = activeRole === key;
+              const isActive = activeRole === key && topNavSection === "workspace";
               return (
                 <button
                   key={key}
-                  onClick={() => switchRole(key)}
+                  onClick={() => {
+                    setTopNavSection("workspace");
+                    switchRole(key);
+                  }}
                   style={{
                     padding: "5px 12px",
                     fontSize: "0.78rem",
@@ -1170,7 +1217,7 @@ export default function App() {
 
       {/* ─── Global Notification Toast ─── */}
       {notification && (
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 100, background: "rgba(16, 185, 129, 0.95)", color: "var(--text-primary)", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", fontWeight: 600, fontSize: "0.875rem" }}>
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 100, background: "rgba(16, 185, 129, 0.95)", color: "#ffffff", padding: "12px 20px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", fontWeight: 600, fontSize: "0.875rem" }}>
           <CheckCircle2 size={18} />
           <span>{notification}</span>
         </div>
@@ -1185,19 +1232,23 @@ export default function App() {
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            ROLE 1: STUDENT VIEW
-        ══════════════════════════════════════════════════════════════════ */}
-        {activeRole === "student" && (
+        {/* Top-Level Roadmaps Section Navigation */}
+        {topNavSection === "roadmaps" ? (
+          <RoadmapHub onNotify={showNotification} user={user} />
+        ) : (
+          <>
+            {/* ══════════════════════════════════════════════════════════════════
+                ROLE 1: STUDENT VIEW
+            ══════════════════════════════════════════════════════════════════ */}
+            {activeRole === "student" && (
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Student Subtab Bar */}
             {/* Student Personal Profile & Goal Hero Header */}
             <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <span className="badge badge-verified">STUDENT LEARNER WORKSPACE</span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 4 }}>
-                    <GraduationCap size={14} /> {studentProfile?.education || "Undergraduate / Graduate"}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}>
+                    <GraduationCap size={15} /> {studentProfile?.education || "Undergraduate / Graduate"}
                   </span>
                 </div>
                 <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", margin: "4px 0" }}>
@@ -1231,10 +1282,7 @@ export default function App() {
                     <Sparkles size={20} />
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span className="badge badge-verified" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>RECOMMENDED NEXT ACTION</span>
-                      <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{dashboardData.next_action.title}</span>
-                    </div>
+                    <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{dashboardData.next_action.title}</span>
                     <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: 2 }}>{dashboardData.next_action.description}</div>
                   </div>
                 </div>
@@ -1256,7 +1304,7 @@ export default function App() {
                 <Shield size={16} /> 5-Tier Evidence & Skill Passport
               </button>
               <button className={`subtab-btn ${studentTab === "resume" ? "active" : ""}`} onClick={() => setStudentTab("resume")}>
-                <FileText size={16} /> Explainable ATS Resume Scanner
+                <FileText size={16} /> AI ATS Resume Analyzer & Studio
               </button>
               <button className={`subtab-btn ${studentTab === "mock_interview" ? "active" : ""}`} onClick={() => setStudentTab("mock_interview")}>
                 <Sparkles size={16} /> AI Mock Interview Studio
@@ -1272,137 +1320,160 @@ export default function App() {
             {/* TAB 1: ROADMAP & ADAPTIVE LEARNING */}
             {studentTab === "roadmap" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Target Role & Market Evidence Header Card */}
-                <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      <span className="badge badge-verified">TARGET CAREER GOAL</span>
-                      {marketEvidence && (
-                        <span style={{ fontSize: "0.75rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 4 }}>
-                          <TrendingUp size={13} /> {marketEvidence.source} · N={marketEvidence.sample_size} postings · {marketEvidence.freshness}
-                        </span>
-                      )}
-                    </div>
-                    <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)", margin: "4px 0" }}>
-                      {dashboardData?.target_role?.title || studentProfile?.target_role_title || "Target Role Not Set"}
-                    </h2>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: 640, marginTop: 4 }}>
-                      {dashboardData?.target_role?.description || "Select your target role to calibrate real-time skill gaps, market demand, and adaptive roadmap."}
-                    </p>
-                    {marketEvidence?.limitations && (
-                      <div style={{ marginTop: 8, fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        ⚠️ Governance note: {marketEvidence.limitations}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Readiness Score Gauge */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)" }}>EVIDENCE READINESS SCORE</div>
-                      <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
-                        {gapData ? `${Math.round(gapData.readiness_score * 100)}%` : "0%"}
-                      </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                        {gapData ? `${gapData.verified_count} verified · ${gapData.self_reported_count} self-reported · ${gapData.gap_count} gaps` : "Configure target role"}
-                      </div>
-                    </div>
-                    <button onClick={async () => { await api.generateRoadmap(); await loadStudentView(); showNotification("Roadmap regenerated based on current evidence!"); }} className="btn btn-primary">
-                      <RefreshCw size={16} /> Regenerate Roadmap
+                {/* Roadmap Sub-Navigation Switcher */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "10px 16px", borderRadius: 12, background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button
+                      onClick={() => setStudentRoadmapView("personalized")}
+                      className={`btn ${studentRoadmapView === "personalized" ? "btn-primary" : "btn-secondary"}`}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", padding: "7px 14px" }}
+                    >
+                      <Sparkles size={15} /> AI Personalized Skill Roadmaps
+                    </button>
+                    <button
+                      onClick={() => setStudentRoadmapView("role_gap")}
+                      className={`btn ${studentRoadmapView === "role_gap" ? "btn-primary" : "btn-secondary"}`}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", padding: "7px 14px" }}
+                    >
+                      <Target size={15} /> Target Career Role Gap Roadmap
                     </button>
                   </div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                    {studentRoadmapView === "personalized" ? "Generate custom skill roadmaps with deadline feasibility analysis & GrowSphere catalog" : "Sequential path calibrated to your target career role gaps"}
+                  </div>
                 </div>
 
-                {/* Grid: Gap Breakdown & Sequential Roadmap */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 20 }}>
-                  {/* Skill Gap Breakdown Card */}
-                  <div className="glass-panel" style={{ padding: 24 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                        <Layers size={18} color="var(--primary)" /> Skill Gap Breakdown
-                      </h3>
-                      <span className="badge badge-verified">{gapData ? `${gapData.total_required} Target Skills` : "Loading"}</span>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {gapData?.skill_details?.map((item, idx) => {
-                        const isVerified = item.status === "verified";
-                        const isSelf = item.status === "self_reported";
-                        return (
-                          <div key={idx} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>{item.skill.canonical_name}</div>
-                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.skill.category || "Technical Skill"}</div>
-                            </div>
-                            <div>
-                              {isVerified && <span className="badge badge-verified"><CheckCircle2 size={12} /> Verified ({Math.round((item.confidence || 0.9) * 100)}%)</span>}
-                              {isSelf && <span className="badge badge-self-reported">Self-Reported (50%)</span>}
-                              {!isVerified && !isSelf && <span className="badge badge-gap">Missing Gap</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Sequential Roadmap Card */}
-                  <div className="glass-panel" style={{ padding: 24 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                {studentRoadmapView === "personalized" ? (
+                  <RoadmapHub onNotify={showNotification} user={user} />
+                ) : (
+                  <>
+                    {/* Target Role & Market Evidence Header Card */}
+                    <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
                       <div>
-                        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                          <Compass size={18} color="var(--accent-cyan)" /> Sequential Dependency Roadmap
-                        </h3>
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Gated by practical assessments (course completion alone ≠ proof)</span>
-                      </div>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
-                        {roadmapData ? `${Math.round(roadmapData.overall_progress * 100)}% Complete` : "0%"}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {roadmapData?.topics?.map((topic) => (
-                        <div
-                          key={topic.id}
-                          style={{
-                            padding: "14px 16px",
-                            borderRadius: 12,
-                            background: topic.is_completed ? "rgba(16, 185, 129, 0.08)" : topic.is_locked ? "rgba(0,0,0,0.3)" : "rgba(99, 102, 241, 0.08)",
-                            border: topic.is_completed ? "1px solid rgba(16, 185, 129, 0.25)" : topic.is_locked ? "1px solid var(--border-subtle)" : "1px solid var(--border-active)",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ width: 28, height: 28, borderRadius: "50%", background: topic.is_completed ? "var(--accent-emerald)" : topic.is_locked ? "rgba(255,255,255,0.06)" : "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                              {topic.is_completed ? <Check size={16} /> : topic.is_locked ? <Lock size={14} /> : topic.order}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: "0.9rem", color: topic.is_locked ? "var(--text-muted)" : "#ffffff" }}>
-                                {topic.title}
-                              </div>
-                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                {topic.is_completed ? "Proficiency Demonstrated & Recorded" : topic.is_locked ? "Prerequisites Required" : "Ready to Assess"}
-                              </div>
-                            </div>
+                        {marketEvidence && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 4 }}>
+                              <TrendingUp size={13} /> {marketEvidence.sample_size?.toLocaleString()} postings analyzed · {marketEvidence.freshness}
+                            </span>
                           </div>
+                        )}
+                        <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)", margin: "4px 0" }}>
+                          {dashboardData?.target_role?.title || studentProfile?.target_role_title || "Target Role Not Set"}
+                        </h2>
+                        <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: 640, marginTop: 4 }}>
+                          {dashboardData?.target_role?.description || "Select your target role to calibrate real-time skill gaps, market demand, and adaptive roadmap."}
+                        </p>
+                      </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <button onClick={() => openStudyDeck(topic.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "5px 10px" }}>
-                              <BookOpen size={13} /> Flashcards
-                            </button>
-                            {!topic.is_completed && !topic.is_locked && topic.assessment_id && (
-                              <button onClick={() => openQuiz(topic.assessment_id)} className="btn btn-primary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
-                                <PlayCircle size={14} /> Take Assessment
-                              </button>
-                            )}
-                            {topic.is_completed && <span className="badge badge-verified">Verified</span>}
+                      {/* Readiness Score Gauge */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)" }}>EVIDENCE READINESS SCORE</div>
+                          <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--accent-emerald)" }}>
+                            {gapData ? `${Math.round(gapData.readiness_score * 100)}%` : "0%"}
+                          </div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                            {gapData ? `${gapData.verified_count} verified · ${gapData.self_reported_count} self-reported · ${gapData.gap_count} gaps` : "Configure target role"}
                           </div>
                         </div>
-                      ))}
+                        <button onClick={async () => { await api.generateRoadmap(); await loadStudentView(); showNotification("Roadmap regenerated based on current evidence!"); }} className="btn btn-primary">
+                          <RefreshCw size={16} /> Regenerate Roadmap
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* Grid: Gap Breakdown & Sequential Roadmap */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 20 }}>
+                      {/* Skill Gap Breakdown Card */}
+                      <div className="glass-panel" style={{ padding: 24 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+                            <Layers size={18} color="var(--primary)" /> Skill Gap Breakdown
+                          </h3>
+                          <span className="badge badge-verified">{gapData ? `${gapData.total_required} Target Skills` : "Loading"}</span>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {gapData?.skill_details?.map((item, idx) => {
+                            const isVerified = item.status === "verified";
+                            const isSelf = item.status === "self_reported";
+                            return (
+                              <div key={idx} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>{item.skill.canonical_name}</div>
+                                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.skill.category || "Technical Skill"}</div>
+                                </div>
+                                <div>
+                                  {isVerified && <span className="badge badge-verified"><CheckCircle2 size={12} /> Verified ({Math.round((item.confidence || 0.9) * 100)}%)</span>}
+                                  {isSelf && <span className="badge badge-self-reported">Self-Reported (50%)</span>}
+                                  {!isVerified && !isSelf && <span className="badge badge-gap">Missing Gap</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Sequential Roadmap Card */}
+                      <div className="glass-panel" style={{ padding: 24 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <div>
+                            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+                              <Compass size={18} color="var(--accent-cyan)" /> Sequential Dependency Roadmap
+                            </h3>
+                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Gated by practical assessments (course completion alone ≠ proof)</span>
+                          </div>
+                          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                            {roadmapData ? `${Math.round(roadmapData.overall_progress * 100)}% Complete` : "0%"}
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                          {roadmapData?.topics?.map((topic) => (
+                            <div
+                              key={topic.id}
+                              style={{
+                                padding: "14px 16px",
+                                borderRadius: 12,
+                                background: topic.is_completed ? "rgba(16, 185, 129, 0.08)" : topic.is_locked ? "var(--bg-subtle)" : "rgba(99, 102, 241, 0.08)",
+                                border: topic.is_completed ? "1px solid rgba(16, 185, 129, 0.25)" : topic.is_locked ? "1px solid var(--border-subtle)" : "1px solid var(--border-active)",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: "50%", background: topic.is_completed ? "var(--accent-emerald)" : topic.is_locked ? "var(--badge-bg)" : "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: topic.is_locked ? "var(--text-muted)" : "#ffffff" }}>
+                                  {topic.is_completed ? <Check size={16} /> : topic.is_locked ? <Lock size={14} /> : topic.order}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: "0.9rem", color: topic.is_locked ? "var(--text-muted)" : "var(--text-primary)" }}>
+                                    {topic.title}
+                                  </div>
+                                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                    {topic.is_completed ? "Proficiency Demonstrated & Recorded" : topic.is_locked ? "Prerequisites Required" : "Ready to Assess"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <button onClick={() => openStudyDeck(topic.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "5px 10px" }}>
+                                  <BookOpen size={13} /> Flashcards
+                                </button>
+                                {!topic.is_completed && !topic.is_locked && topic.assessment_id && (
+                                  <button onClick={() => openQuiz(topic.assessment_id)} className="btn btn-primary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
+                                    <PlayCircle size={14} /> Take Assessment
+                                  </button>
+                                )}
+                                {topic.is_completed && <span className="badge badge-verified">Verified</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -1417,7 +1488,7 @@ export default function App() {
                       Public Skill Passport: {passport?.title || "Data Analyst Proficiency"}
                     </h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 4 }}>
-                      Slug: <code style={{ color: "var(--accent-cyan)", background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>/passport/public/{passport?.share_slug}</code>
+                      Slug: <code style={{ color: "var(--accent-cyan)", background: "var(--code-bg)", border: "1px solid var(--border-subtle)", padding: "2px 6px", borderRadius: 4 }}>/passport/public/{passport?.share_slug}</code>
                     </p>
                   </div>
 
@@ -1554,7 +1625,14 @@ export default function App() {
             {studentTab === "resume" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {/* Mode Selector Toggle */}
-                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setResumeMode("analyzer")}
+                    className={`btn ${resumeMode === "analyzer" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> AI ATS Resume Analyzer & Role Fit
+                  </button>
                   <button
                     onClick={() => setResumeMode("builder")}
                     className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
@@ -1567,17 +1645,20 @@ export default function App() {
                     className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
                     style={{ fontSize: "0.82rem", padding: "6px 16px" }}
                   >
-                    <Sparkles size={15} /> ATS Resume Scanner & Parser
+                    <CheckSquare size={15} /> Quick Skill Extractor & Profile Sync
                   </button>
                 </div>
 
-                {resumeMode === "builder" ? (
+                {resumeMode === "analyzer" ? (
+                  <ATSResumeAnalyzer user={user} />
+                ) : resumeMode === "builder" ? (
                   <ResumeBuilder
                     user={user}
                     studentProfile={studentProfile}
                     employeeProfile={employeeProfile}
                     targetRole={dashboardData?.target_role || { title: studentProfile?.target_role_title || "Data Analyst" }}
                     myEvidence={myEvidence}
+                    onNavigateToRoadmap={() => setStudentTab("roadmap")}
                   />
                 ) : (
                   <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1671,7 +1752,7 @@ export default function App() {
                         </div>
 
                         {atsSuggestions.length > 0 && (
-                          <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
+                          <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}>
                             <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
                             <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
                               {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
@@ -1730,86 +1811,16 @@ export default function App() {
 
             {/* TAB 5: OPPORTUNITIES & APPLICATION TRACKER */}
             {studentTab === "jobs" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Application Tracking Kanban-style List */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <CheckSquare size={18} color="var(--accent-emerald)" /> Active Application Tracker ({savedJobs.length} Opportunities)
-                  </h3>
-
-                  {savedJobs.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No saved opportunities yet. Save matching roles below to track your applications!</p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {savedJobs.map((item) => (
-                        <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
-                            {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
-                          </div>
-
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <select
-                              value={item.status}
-                              onChange={(e) => handleUpdateAppStatus(item.id, e.target.value)}
-                              className="input-field"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem", width: "auto" }}
-                            >
-                              <option value="saved">Saved</option>
-                              <option value="applied">Applied</option>
-                              <option value="interviewing">Interviewing</option>
-                              <option value="offered">Offered</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                            <span className="badge badge-verified">{item.status.toUpperCase()}</span>
-                            <button
-                              onClick={() => handleDeleteSavedOpportunity(item.id)}
-                              className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
-                              title="Remove opportunity from tracking"
-                            >
-                              ✕ Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Matches Radar */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <Briefcase size={18} color="var(--primary)" /> Transparent Opportunity Matches
-                  </h3>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {jobMatches.map((jm, i) => (
-                      <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
-                          </div>
-                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
-                        </div>
-
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 10 }}>
-                          {jm.explanation}
-                        </div>
-
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Source: {jm.job.source || "Naukri"}</span>
-                          <button onClick={() => handleSaveJob(jm.job.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
-                            Save Opportunity
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <OpportunityRadar
+                user={user}
+                studentProfile={studentProfile}
+                employeeProfile={employeeProfile}
+                onNavigateToRoadmap={() => setStudentTab("roadmap")}
+                onNavigateToResumeBuilder={() => {
+                  setStudentTab("resume");
+                  setResumeMode("builder");
+                }}
+              />
             )}
 
             {/* TAB 6: COURSES & MENTORS MARKETPLACE */}
@@ -1961,11 +1972,7 @@ export default function App() {
                 {/* Employee Profile Header */}
                 <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      <span className="badge badge-verified">EMPLOYEE PROFESSIONAL</span>
-                      <span className="badge badge-self-reported">VERIFIED ACCOUNT</span>
-                    </div>
-                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+                    <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 4px 0" }}>
                       {user?.full_name || "Professional"}
                     </h1>
                     <div style={{ fontSize: "1rem", color: "var(--accent-cyan)", fontWeight: 600, marginTop: 4 }}>
@@ -2153,7 +2160,6 @@ export default function App() {
                   <div className="glass-panel" style={{ padding: 24 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
                       <div>
-                        <span className="badge badge-verified" style={{ marginBottom: 6 }}>CAREER SWITCH & PROMOTION ESTIMATION</span>
                         <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                           {transitionAnalysis.current_role} → {transitionAnalysis.target_role}
                         </h2>
@@ -2317,10 +2323,10 @@ export default function App() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {roadmapData?.topics?.map((topic, i) => (
-                      <div key={topic.id || i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: `1px solid ${topic.is_completed ? "rgba(16, 185, 129, 0.4)" : "var(--border-subtle)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+                      <div key={topic.id || i} style={{ padding: 18, borderRadius: 12, background: "var(--bg-subtle)", border: `1px solid ${topic.is_completed ? "rgba(16, 185, 129, 0.4)" : "var(--border-subtle)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
                         <div style={{ flex: 1, minWidth: 260 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontWeight: 800, color: topic.is_completed ? "var(--accent-emerald)" : "#fff", fontSize: "1rem" }}>
+                            <span style={{ fontWeight: 800, color: topic.is_completed ? "var(--accent-emerald)" : "var(--text-primary)", fontSize: "1rem" }}>
                               {i + 1}. {topic.title}
                             </span>
                             <span className={`badge ${topic.is_completed ? "badge-verified" : "badge-self-reported"}`}>
@@ -2496,7 +2502,14 @@ export default function App() {
             {employeeTab === "resume" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {/* Mode Selector Toggle */}
-                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setResumeMode("analyzer")}
+                    className={`btn ${resumeMode === "analyzer" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> AI ATS Resume Analyzer & Role Fit
+                  </button>
                   <button
                     onClick={() => setResumeMode("builder")}
                     className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
@@ -2509,17 +2522,20 @@ export default function App() {
                     className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
                     style={{ fontSize: "0.82rem", padding: "6px 16px" }}
                   >
-                    <Sparkles size={15} /> ATS Scanner & Experience Parser
+                    <CheckSquare size={15} /> Quick Experience Parser
                   </button>
                 </div>
 
-                {resumeMode === "builder" ? (
+                {resumeMode === "analyzer" ? (
+                  <ATSResumeAnalyzer user={user} />
+                ) : resumeMode === "builder" ? (
                   <ResumeBuilder
                     user={user}
                     studentProfile={studentProfile}
                     employeeProfile={employeeProfile}
                     targetRole={dashboardData?.target_role || { title: employeeProfile?.current_role || "Leadership Candidate" }}
                     myEvidence={myEvidence}
+                    onNavigateToRoadmap={() => setEmployeeTab("roadmap")}
                   />
                 ) : (
                   <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -2613,7 +2629,7 @@ export default function App() {
                     </div>
 
                     {atsSuggestions.length > 0 && (
-                      <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-subtle)" }}>
+                      <div style={{ marginTop: 8, padding: 14, borderRadius: 8, background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}>
                         <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: 6 }}>ATS Formatting & Readability Recommendations:</div>
                         <ul style={{ paddingLeft: 20, fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
                           {atsSuggestions.map((sug, i) => <li key={i}>{sug}</li>)}
@@ -2661,86 +2677,16 @@ export default function App() {
 
             {/* ════════ SUBTAB 6: OPPORTUNITIES RADAR & TRACKER ════════ */}
             {employeeTab === "jobs" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Active Application Tracker */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <CheckSquare size={18} color="var(--accent-emerald)" /> Professional Application Tracker ({savedJobs.length} Opportunities)
-                  </h3>
-
-                  {savedJobs.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No saved opportunities yet. Save matching roles below to track your applications!</p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {savedJobs.map((item) => (
-                        <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
-                            {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
-                          </div>
-
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <select
-                              value={item.status}
-                              onChange={(e) => handleUpdateAppStatus(item.id, e.target.value)}
-                              className="input-field"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem", width: "auto" }}
-                            >
-                              <option value="saved">Saved</option>
-                              <option value="applied">Applied</option>
-                              <option value="interviewing">Interviewing</option>
-                              <option value="offered">Offered</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                            <span className="badge badge-verified">{item.status.toUpperCase()}</span>
-                            <button
-                              onClick={() => handleDeleteSavedOpportunity(item.id)}
-                              className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
-                              title="Remove opportunity from tracking"
-                            >
-                              ✕ Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Matches Radar */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <Briefcase size={18} color="var(--primary)" /> Lateral & Leadership Opportunity Matches
-                  </h3>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {jobMatches.map((jm, i) => (
-                      <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
-                          </div>
-                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
-                        </div>
-
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 10 }}>
-                          {jm.explanation}
-                        </div>
-
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Source: {jm.job.source || "Naukri"}</span>
-                          <button onClick={() => handleSaveJob(jm.job.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
-                            Save Opportunity
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <OpportunityRadar
+                user={user}
+                studentProfile={studentProfile}
+                employeeProfile={employeeProfile}
+                onNavigateToRoadmap={() => setEmployeeTab("roadmap")}
+                onNavigateToResumeBuilder={() => {
+                  setEmployeeTab("resume");
+                  setResumeMode("builder");
+                }}
+              />
             )}
 
             {/* ════════ SUBTAB 7: EXECUTIVE MENTORS & ADVISORY ════════ */}
@@ -3404,6 +3350,8 @@ export default function App() {
           </div>
           )
         )}
+          </>
+        )}
       </main>
 
       {/* ─── MODAL 1: PRACTICAL ASSESSMENT QUIZ ─── */}
@@ -3567,7 +3515,7 @@ export default function App() {
             )}
 
             {studyMaterials.study_notes && (
-              <div style={{ marginTop: 24, padding: 16, borderRadius: 10, background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ marginTop: 24, padding: 16, borderRadius: 10, background: "var(--bg-subtle)", border: "1px solid var(--border-subtle)" }}>
                 <div style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>Key Study Notes:</div>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{studyMaterials.study_notes}</p>
               </div>

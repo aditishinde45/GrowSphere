@@ -32,8 +32,7 @@ export default function SkillDemandRadar({ targetRole, marketEvidence }) {
       {/* Top Banner & Audit Credentials */}
       <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <span className="badge badge-verified">MARKET EVIDENCE RADAR</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: "0.8rem", color: "var(--accent-cyan)", display: "flex", alignItems: "center", gap: 4 }}>
               <Activity size={14} /> N={sampleSize} Analyzed Job Postings · {freshness}
             </span>

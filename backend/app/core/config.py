@@ -45,8 +45,21 @@ class Settings(BaseSettings):
     # --- Provider Modes (Sandbox / Live) ---
     EMAIL_PROVIDER: str = "sandbox"  # sandbox / smtp
     PAYMENT_PROVIDER: str = "sandbox"  # sandbox / stripe / razorpay
-    AI_PROVIDER: str = "sandbox"  # sandbox / openai
+    AI_PROVIDER: str = "gemini"  # gemini / openai / sandbox
+    AI_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.8-flash"
     CALENDAR_PROVIDER: str = "sandbox"  # sandbox / google
+
+    # --- Neon Serverless Postgres & Neon Auth ---
+    DATABASE_URL_UNPOOLED: Optional[str] = None
+    NEON_BRANCH: Optional[str] = None
+    NEON_AUTH_BASE_URL: Optional[str] = None
+    NEON_AUTH_JWKS_URL: Optional[str] = None
+
+    @property
+    def is_neon(self) -> bool:
+        return bool(self.NEON_BRANCH or "neon.tech" in self.DATABASE_URL)
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -76,7 +89,18 @@ class Settings(BaseSettings):
                     "SQLite DATABASE_URL is not permitted in production."
                 )
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+    model_config = {
+        "env_file": (
+            str(PROJECT_ROOT / ".env"),
+            str(BACKEND_DIR / ".env"),
+            ".env",
+            str(PROJECT_ROOT / ".env.local"),
+            str(BACKEND_DIR / ".env.local"),
+            ".env.local",
+        ),
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()

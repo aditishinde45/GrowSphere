@@ -33,7 +33,13 @@ def get_current_user(
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token")
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    # Support both integer user IDs (GrowSphere internal) and string/email (Neon Auth)
+    if str(user_id).isdigit():
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    else:
+        email = payload.get("email") or str(user_id)
+        user = db.query(User).filter(User.email == email).first()
+
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     if not user.is_active:
@@ -56,7 +62,10 @@ def get_current_user_optional(
         user_id = payload.get("sub")
         if user_id is None:
             return None
-        return db.query(User).filter(User.id == int(user_id)).first()
+        if str(user_id).isdigit():
+            return db.query(User).filter(User.id == int(user_id)).first()
+        email = payload.get("email") or str(user_id)
+        return db.query(User).filter(User.email == email).first()
     except Exception:
         return None
 

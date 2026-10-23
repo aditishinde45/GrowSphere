@@ -394,11 +394,22 @@ class Roadmap(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    career_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=False)
+    career_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=True)
+    skill_name = Column(String(255), nullable=True, index=True)
+    current_level = Column(String(50), default="Beginner")
+    target_level = Column(String(50), default="Job-Ready / Advanced")
+    desired_deadline = Column(String(100), nullable=True)
+    estimated_duration = Column(String(100), nullable=True)
+    hours_per_week = Column(Integer, default=10)
+    status = Column(String(50), default="In Progress")
+    is_accelerated = Column(Boolean, default=False)
+    deadline_validation = Column(JSON, nullable=True)
+    learning_plan = Column(JSON, nullable=True)
+    completed_tasks = Column(JSON, default=list)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    overall_progress = Column(Float, default=0.0)  # 0.0-1.0
+    overall_progress = Column(Float, default=0.0)  # 0.0-100.0 or 0.0-1.0
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -707,6 +718,11 @@ class MockInterviewSession(Base):
     consent_given = Column(Boolean, default=True)
     questions = Column(JSON, nullable=True)
     responses = Column(JSON, nullable=True)
+    interview_mode = Column(String(50), default="voice")  # voice, text_rubric
+    duration_minutes = Column(Integer, default=15)
+    resume_context = Column(Text, nullable=True)
+    transcript = Column(JSON, nullable=True)  # List of {speaker, text, timestamp, is_followup, etc.}
+    analytics = Column(JSON, nullable=True)  # 5-pillar scores, fluency, metrics
     feedback_report = Column(JSON, nullable=True)
     overall_score = Column(Float, nullable=True)  # 0.0-1.0
     created_at = Column(DateTime, default=utcnow)
@@ -778,8 +794,13 @@ class SavedOpportunity(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     job_id = Column(Integer, ForeignKey("job_postings.id"), nullable=False, index=True)
-    status = Column(String(50), default="saved")  # saved, applied, interviewing, offered, rejected
+    status = Column(String(50), default="saved")  # saved, applied, assessment, interview, offer, rejected, withdrawn
     notes = Column(Text, nullable=True)
+    application_data = Column(JSON, nullable=True)
+    resume_id = Column(Integer, ForeignKey("saved_resumes.id"), nullable=True)
+    interview_date = Column(DateTime, nullable=True)
+    follow_up_date = Column(DateTime, nullable=True)
+    external_tracking_url = Column(String(1000), nullable=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -789,6 +810,7 @@ class SavedOpportunity(Base):
 
     user = relationship("User")
     job = relationship("JobPosting")
+    resume = relationship("SavedResume")
 
 
 # ─── Moderation, Trust & Support ──────────────────────────────────────
@@ -850,3 +872,41 @@ class EmailVerificationToken(Base):
     created_at = Column(DateTime, default=utcnow)
 
     user = relationship("User")
+
+
+# ─── ATS Resume Analysis ─────────────────────────────────────────────
+class ResumeAnalysis(Base):
+    __tablename__ = "resume_analyses"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    filename = Column(String(255), nullable=False)
+    target_role = Column(String(200), nullable=False)
+    resume_text = Column(Text, nullable=False)
+    ats_score = Column(Integer, nullable=False)
+    role_suitability = Column(Integer, nullable=False)
+    analysis_json = Column(JSON, nullable=False)  # Full structured analysis result
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+
+
+# ─── Saved AI Resume Builder Versions ─────────────────────────────────
+class SavedResume(Base):
+    __tablename__ = "saved_resumes"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    target_role = Column(String(200), nullable=False)
+    template_id = Column(String(50), default="modern")
+    accent_color = Column(String(20), default="#0a66c2")
+    resume_data = Column(JSON, nullable=False)
+    qa_answers = Column(JSON, nullable=True)
+    ats_score = Column(Integer, nullable=True)
+    role_suitability = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User")
+

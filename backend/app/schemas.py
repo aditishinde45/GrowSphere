@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation.
 """
 
 from datetime import datetime
-from typing import Optional, List, Union, Any
+from typing import Optional, List, Union, Any, Dict
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -228,15 +228,67 @@ class RoadmapTopicOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PersonalizedRoadmapRequest(BaseModel):
+    skill_name: str = Field(..., min_length=2, max_length=255)
+    current_level: str = "Beginner"
+    target_level: Optional[str] = "Job-Ready / Advanced"
+    deadline: Optional[str] = None
+    hours_per_week: Optional[int] = 15
+    force_accelerated: Optional[bool] = False
+
+
+class DeadlineValidationRequest(BaseModel):
+    skill_name: str
+    current_level: str = "Beginner"
+    target_level: Optional[str] = "Job-Ready / Advanced"
+    deadline: str
+    hours_per_week: Optional[int] = 15
+
+
+class DeadlineValidationResponse(BaseModel):
+    is_feasible: bool
+    status: str  # realistic / ambitious / unrealistic
+    skill_name: str
+    complexity: str  # Low / Medium / High / Very High
+    estimated_total_hours: int
+    requested_days: int
+    available_hours: int
+    message: str
+    suggested_duration_weeks: int
+    suggested_timeline_text: str
+    suggested_weekly_hours: int
+    accelerated_option_available: bool
+    accelerated_scope_summary: Optional[str] = None
+
+
+class TaskToggleRequest(BaseModel):
+    task_id: str
+    is_completed: bool
+
+
 class RoadmapOut(BaseModel):
     id: int
-    career_role_id: int
-    career_role_title: str
+    user_id: Optional[int] = None
+    career_role_id: Optional[int] = None
+    career_role_title: Optional[str] = None
+    skill_name: Optional[str] = None
+    current_level: Optional[str] = "Beginner"
+    target_level: Optional[str] = "Job-Ready / Advanced"
+    desired_deadline: Optional[str] = None
+    estimated_duration: Optional[str] = None
+    hours_per_week: Optional[int] = 10
+    status: Optional[str] = "In Progress"
+    is_accelerated: Optional[bool] = False
+    deadline_validation: Optional[Dict[str, Any]] = None
+    learning_plan: Optional[Dict[str, Any]] = None
+    completed_tasks: Optional[List[str]] = []
     title: str
+    description: Optional[str] = None
     overall_progress: float
     is_active: bool
     topics: List[RoadmapTopicOut] = []
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
@@ -577,12 +629,58 @@ class MentorEndorsementCreate(BaseModel):
     comment: Optional[str] = None
 
 
-# ─── AI Mock Interview & Practice ─────────────────────────────────────
+# ─── AI Mock Interview & Voice Assistance ─────────────────────────────
+class VoiceInterviewPlanRequest(BaseModel):
+    role_id: Optional[int] = None
+    target_role: Optional[str] = "Data Analyst"
+    duration_minutes: Optional[int] = 15
+    experience_level: Optional[str] = "Mid-Level"
+    resume_text: Optional[str] = None
+
+
+class VoiceInterviewPlanResponse(BaseModel):
+    plan_id: str
+    target_role: str
+    experience_level: str
+    duration_minutes: int
+    greeting: str
+    candidate_summary: Dict[str, Any]
+    agenda: List[Dict[str, Any]]
+    first_question: Dict[str, Any]
+    questions: Optional[List[Dict[str, Any]]] = None
+
+
 class MockInterviewStartRequest(BaseModel):
     role_id: Optional[int] = None
     target_role: Optional[str] = "Data Analyst"
     interview_type: Optional[str] = "technical"
+    interview_mode: Optional[str] = "voice"
+    duration_minutes: Optional[int] = 15
+    experience_level: Optional[str] = "Mid-Level"
+    resume_text: Optional[str] = None
     idempotency_key: Optional[str] = None
+
+
+class VoiceTurnRequest(BaseModel):
+    user_spoken_text: str
+    elapsed_seconds: Optional[int] = 0
+    question_index: Optional[int] = 0
+    is_final_turn: Optional[bool] = False
+
+
+class VoiceTurnResponse(BaseModel):
+    session_id: int
+    ai_response_text: str
+    is_followup: bool
+    next_question_index: int
+    is_session_complete: bool
+    probed_skill: Optional[str] = None
+    live_metrics: Optional[Dict[str, Any]] = None
+
+
+class VoiceFinalizeRequest(BaseModel):
+    elapsed_seconds: Optional[int] = 0
+    final_transcript: Optional[List[Dict[str, Any]]] = None
 
 
 class MockInterviewSubmitRequest(BaseModel):

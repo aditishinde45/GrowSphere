@@ -3,7 +3,8 @@
  * Connects to FastAPI backend with configurable environment-based URL.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const rawBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE = rawBase.endsWith("/api") ? rawBase : `${rawBase.replace(/\/+$/, "")}/api`;
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("growsphere_token");
@@ -45,6 +46,45 @@ export const register = (email, fullName, password, role) =>
     method: "POST",
     body: JSON.stringify({ email, full_name: fullName, password, role }),
   });
+
+// ─── Neon Services Integration (Postgres & Auth) ───
+export const getNeonServiceStatus = () => apiRequest("/auth/neon/status");
+
+export const syncNeonUser = (userData) =>
+  apiRequest("/auth/neon/sync", {
+    method: "POST",
+    body: JSON.stringify(userData),
+  });
+
+export const NEON_AUTH_URL =
+  import.meta.env.VITE_NEON_AUTH_BASE_URL ||
+  "https://ep-green-flower-azk4g2er.neonauth.c-3.ap-southeast-1.aws.neon.tech/neondb/auth";
+
+export const neonAuthSignIn = async (email, password) => {
+  const resp = await fetch(`${NEON_AUTH_URL}/sign-in/email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || "Neon Auth sign-in failed");
+  }
+  return await resp.json();
+};
+
+export const neonAuthSignUp = async (email, password, name) => {
+  const resp = await fetch(`${NEON_AUTH_URL}/sign-up/email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || "Neon Auth sign-up failed");
+  }
+  return await resp.json();
+};
 
 export const getMe = () => apiRequest("/auth/me");
 export const logout = () => apiRequest("/auth/logout", { method: "POST" });
@@ -116,6 +156,30 @@ export const addProjectEvidence = (skillId, projectTitle, projectUrl, proofText)
 export const getMarketEvidence = (params = "") =>
   apiRequest(`/skills/market-evidence${params ? `?${params}` : ""}`);
 export const getActiveRoadmap = () => apiRequest("/roadmap/active");
+export const listUserRoadmaps = () => apiRequest("/roadmap/");
+export const getRoadmapById = (roadmapId) => apiRequest(`/roadmap/${roadmapId}`);
+export const validateRoadmapDeadline = (data) =>
+  apiRequest("/roadmap/validate-deadline", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const generatePersonalizedRoadmap = (data) =>
+  apiRequest("/roadmap/generate-personalized", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const toggleRoadmapTask = (roadmapId, taskId, isCompleted) =>
+  apiRequest(`/roadmap/${roadmapId}/toggle-task`, {
+    method: "POST",
+    body: JSON.stringify({ task_id: taskId, is_completed: isCompleted }),
+  });
+export const regeneratePersonalizedRoadmap = (roadmapId, data) =>
+  apiRequest(`/roadmap/${roadmapId}/regenerate`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const deleteRoadmap = (roadmapId) =>
+  apiRequest(`/roadmap/${roadmapId}`, { method: "DELETE" });
 export const generateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
 export const regenerateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
 
@@ -159,17 +223,44 @@ export const requestSellerPayout = (amount, payoutDetails) =>
     body: JSON.stringify({ amount, payout_details: payoutDetails }),
   });
 
-// ─── AI Mock Interview Studio ───
-export const startMockInterview = (targetRole, interviewType) =>
-  apiRequest("/mock-interviews/start", {
+// ─── AI Mock Interview Studio (Voice & Rubric) ───
+export const getVoiceInterviewPlan = (data) =>
+  apiRequest("/mock-interviews/plan", {
     method: "POST",
-    body: JSON.stringify({ target_role: targetRole, interview_type: interviewType }),
+    body: JSON.stringify(data),
   });
+
+export const startMockInterview = (targetRoleOrPayload, interviewType) => {
+  const payload = typeof targetRoleOrPayload === "object"
+    ? targetRoleOrPayload
+    : { target_role: targetRoleOrPayload, interview_type: interviewType || "technical" };
+  return apiRequest("/mock-interviews/start", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+};
+
+export const sendVoiceTurn = (sessionId, data) =>
+  apiRequest(`/mock-interviews/${sessionId}/turn`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const finalizeVoiceInterview = (sessionId, data) =>
+  apiRequest(`/mock-interviews/${sessionId}/finalize`, {
+    method: "POST",
+    body: JSON.stringify(data || {}),
+  });
+
+export const getMockInterviewSession = (sessionId) =>
+  apiRequest(`/mock-interviews/${sessionId}`);
+
 export const submitMockInterviewAnswer = (sessionId, questionId, learnerAnswer) =>
   apiRequest(`/mock-interviews/${sessionId}/answer`, {
     method: "POST",
     body: JSON.stringify({ question_id: questionId, learner_answer: learnerAnswer }),
   });
+
 export const getMockInterviewHistory = () => apiRequest("/mock-interviews/my-history");
 
 // ─── Learning Materials (Flashcards & Notes) ───
@@ -218,9 +309,30 @@ export const createCourseReview = (courseId, rating, reviewText) =>
   });
 export const getCourseReviews = (courseId) => apiRequest(`/courses/${courseId}/reviews`);
 
-// ─── Jobs, Internships & Saved Opportunities ───
+// ─── Jobs, Internships & Saved Opportunities (Opportunity Radar) ───
 export const getJobs = (params = "") => apiRequest(`/jobs/${params}`);
 export const getJobMatches = () => apiRequest("/jobs/matches");
+export const getOpportunityRadar = (params = {}) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") query.append(k, v);
+  });
+  const qs = query.toString();
+  return apiRequest(`/jobs/radar${qs ? `?${qs}` : ""}`);
+};
+export const easyApplyOpportunity = (jobId, payload) =>
+  apiRequest(`/jobs/${jobId}/easy-apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+export const trackExternalOpportunity = (jobId, payload) =>
+  apiRequest(`/jobs/${jobId}/track-external`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+export const getOpportunityTrackingSummary = () => apiRequest("/jobs/tracking/summary");
 export const saveOpportunity = (jobPostingId, notes) =>
   apiRequest(`/jobs/${jobPostingId}/save`, {
     method: "POST",
@@ -229,10 +341,17 @@ export const saveOpportunity = (jobPostingId, notes) =>
 export const getSavedOpportunities = () => apiRequest("/jobs/saved/my");
 export const deleteSavedOpportunity = (savedId) =>
   apiRequest(`/jobs/saved/${savedId}`, { method: "DELETE" });
-export const updateSavedApplicationStatus = (savedId, status, notes) =>
+export const updateSavedApplicationStatus = (savedId, status, notes, interviewDate, followUpDate, externalUrl) =>
   apiRequest(`/jobs/saved/${savedId}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status, notes }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      status,
+      notes,
+      interview_date: interviewDate,
+      follow_up_date: followUpDate,
+      external_tracking_url: externalUrl,
+    }),
   });
 
 // ─── Mentors, Availability, Bookings & Endorsements ───
@@ -332,4 +451,86 @@ export const getDataRegisterSummary = () => apiRequest("/data-register/summary")
 
 // ─── Health ───
 export const checkDbHealth = () => apiRequest("/health/db");
+
+// ─── ATS Resume Analyzer ───
+export const analyzeResumeFile = (file, targetRole) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("target_role", targetRole);
+  return apiRequest("/resume-analyzer/analyze", {
+    method: "POST",
+    body: formData,
+  });
+};
+export const getResumeAnalysisHistory = () => apiRequest("/resume-analyzer/history");
+export const getResumeAnalysisReport = (id) => apiRequest(`/resume-analyzer/report/${id}`);
+export const getSupportedRoles = () => apiRequest("/resume-analyzer/roles");
+
+// ─── AI Resume Builder ───
+export const getResumeBuilderProfileContext = (targetRole = "") =>
+  apiRequest(`/resume-builder/profile-context${targetRole ? `?target_role=${encodeURIComponent(targetRole)}` : ""}`);
+
+export const inspectGitHubRepo = (repoUrl) =>
+  apiRequest("/resume-builder/inspect-github", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repo_url: repoUrl }),
+  });
+
+export const generateResumeData = (targetRole, qaAnswers, templateId = "modern", accentColor = "#0a66c2") =>
+  apiRequest("/resume-builder/generate-resume", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      target_role: targetRole,
+      qa_answers: qaAnswers,
+      template_id: templateId,
+      accent_color: accentColor,
+    }),
+  });
+
+export const saveResumeVersion = (payload) =>
+  apiRequest("/resume-builder/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+export const listSavedResumes = () => apiRequest("/resume-builder/list");
+
+export const getSavedResume = (id) => apiRequest(`/resume-builder/${id}`);
+
+export const deleteSavedResume = (id) =>
+  apiRequest(`/resume-builder/${id}`, { method: "DELETE" });
+
+export const quickATSCheck = (targetRole, resumeData) =>
+  apiRequest("/resume-builder/quick-ats-check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_role: targetRole, resume_data: resumeData }),
+  });
+
+export const downloadResumeDocx = async (resumeData) => {
+  const token = localStorage.getItem("growsphere_token");
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+  const res = await fetch(`${API_BASE}/resume-builder/export-docx`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(resumeData),
+  });
+  if (!res.ok) throw new Error("Failed to export DOCX document");
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const name = resumeData?.personal_info?.name || "Candidate";
+  a.download = `${name.replace(/\s+/g, "_")}_Resume.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
 

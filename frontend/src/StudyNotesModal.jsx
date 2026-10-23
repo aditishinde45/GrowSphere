@@ -90,8 +90,7 @@ export default function StudyNotesModal({
               <BookOpen size={20} />
             </div>
             <div>
-              <span className="badge badge-verified" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>AI REVISION DECK</span>
-              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-primary)", margin: "2px 0" }}>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
                 {topic.title}
               </h2>
             </div>
