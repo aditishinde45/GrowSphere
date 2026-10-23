@@ -23,8 +23,10 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import precision_recall_fscore_support
 
-RAW_DATA_PATH = Path(r"D:\GrowSphere\_raw_data\Naukri Jobs Data.csv")
-EXPERIMENT_OUTPUT_DIR = Path(r"D:\GrowSphere\backend\app\ml")
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = BACKEND_DIR.parent
+RAW_DATA_PATH = PROJECT_ROOT / "_raw_data" / "Naukri Jobs Data.csv"
+EXPERIMENT_OUTPUT_DIR = Path(__file__).resolve().parents[1] / "ml"
 EXPERIMENT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ─── Canonical Skill Taxonomy & Aliases ─────────────────────────────────
@@ -249,7 +251,7 @@ def run_naukri_experiment() -> Dict[str, Any]:
         "skills": canonical_skills,
     }
 
-    _write_corrected_markdown_report(results, Path(r"D:\GrowSphere\NAUKRI_ML_EXPERIMENT.md"))
+    _write_corrected_markdown_report(results, PROJECT_ROOT / "NAUKRI_ML_EXPERIMENT.md")
     return results
 
 

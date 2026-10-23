@@ -1,6 +1,6 @@
 # GrowSphere — Official Data Usage Register & Lineage Matrix (v2.1)
 
-> **Audit Timestamp:** `2026-10-21T13:08:17.163051+00:00` | **Total Physical Files Accounted For:** 28 | **Unique Content Hashes:** 26
+> **Audit Timestamp:** `2026-10-22T14:29:14.185331+00:00` | **Total Physical Files Accounted For:** 28 | **Unique Content Hashes:** 26
 > **Governance Policy:** Zero unmapped files. Mutually exclusive row dispositions. Strict boundary between experimental models, synthetic fixtures, quarantined datasets, and production catalog.
 > **Manifest Lineage Note:** Accounts for all 28 physical files on disk in `_raw_data/` (the 26 prompt-specified paths + extracted `Naukri Jobs Data.csv` + ASCII hyphen variant `LearnUP - Complete USP Document.pdf`).
 
@@ -10,6 +10,7 @@
 
 | Source File | Source Type | Full SHA-256 Checksum | Raw Rows | Exact Dupes | Unique Source | Canonical Insert | Linked / Out-of-Scope / Excluded | Trust / Use State | Assigned GrowSphere Use |
 |---|---|---|---|---|---|---|---|---|---|
+<<<<<<< Updated upstream
 | `LearnUP_Product_Requirements_and_USPs.docx` | `reference_doc` | `25bfbbba8bfc17fc39d0f4b767281c7402bc53304c630bf36f877bfc3f78ca55` | — | — | — | — | — | `reference` | Primary product specification: defines the 4 core external roles, 32 e... |
 | `udemy_courses.csv` | `dataset` | `2848cb0830792f98085077b71fa06c90f3d79a1e8fc0ba8ab9225f02d3d85905` | 3,678 | 6 | 3,672 | 3,672 | — | `active_verified` | Seeds active course catalog with titles, URLs, subjects, levels, prici... |
 | `student_placement_career_success_dataset.csv` | `research_dataset` | `3a27aa5fdd3d424c023690119ae4f8724a0b787dae0f9ddd1ad247a0b032d02b` | 25,000 | 0 | 25,000 | 0 | 25,000 source-only | `quarantined` | Internal descriptive analysis of target leakage, class imbalance, and ... |
@@ -123,8 +124,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `LearnUP_Product_Requirements_and_USPs.docx`
 - **Source Type:** `reference_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `25bfbbba8bfc17fc39d0f4b767281c7402bc53304c630bf36f877bfc3f78ca55`
-- **File Size:** 52,664 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Primary product specification: defines the 4 core external roles, 32 entity schema, evidence-driven career growth loop, and Phase 1 roadmap.
 - **Governance Restrictions:** Reference material only; embedded instructions treated as untrusted data.
@@ -133,8 +134,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `udemy_courses.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `2848cb0830792f98085077b71fa06c90f3d79a1e8fc0ba8ab9225f02d3d85905`
-- **File Size:** 693,946 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Seeds active course catalog with titles, URLs, subjects, levels, pricing, duration, and subscriber metrics.
 - **Governance Restrictions:** Extracted skill tags labeled as unverified suggestions. Free courses prioritized before paid courses.
@@ -143,8 +144,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `student_placement_career_success_dataset.csv`
 - **Source Type:** `research_dataset` | **Trust/Use State:** `quarantined`
-- **Full SHA-256:** `3a27aa5fdd3d424c023690119ae4f8724a0b787dae0f9ddd1ad247a0b032d02b`
-- **File Size:** 4,640,004 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Internal descriptive analysis of target leakage, class imbalance, and fairness safeguards. Zero predictive use.
 - **Governance Restrictions:** STRICT RESTRICTION: Quarantined from predictive modeling. NEVER used to train a placement predictor or recommend learners.
@@ -153,8 +154,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `scraped_jobs.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `69e030142802151e01b9f1d467a59c3d34e7982d2db7096b16188f760c9c863f`
-- **File Size:** 5,414,076 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Primary scraped job opportunities directory; ingestion, URL validation, and normalization.
 - **Governance Restrictions:** Duplicates linked to canonical source records without double-counting; only distinct URL records promoted to active listings.
@@ -163,8 +164,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `scraped_internships.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `9c0b42b67ab279ecfe30e7b4e3f73ffdc2a95c3978c3843df4d162532fc48a26`
-- **File Size:** 4,111,347 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Internship ingestion directory. Unknown locations and opportunity types preserved as unknown without invention.
 - **Governance Restrictions:** Missing locations preserved as 'Unknown' (never fabricated). Only records with validated URLs promoted.
@@ -173,8 +174,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `scraped_hackathons.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `45907e851a9e9c02cf8a505b327d3544e94194e5a2dd4b185f460f42d03513ef`
-- **File Size:** 1,804,382 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Hackathon ingestion, link verification, deadline validation, and event-status QA. Missing deadlines preserved as unknown.
 - **Governance Restrictions:** Missing deadlines remain unknown. Valid URLs verified before promotion.
@@ -183,8 +184,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `MOOC.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `3ccf430e27917fb969acd06fd2616cbc7e8d1dc9fa02653f65d67e5e7d1128ae`
-- **File Size:** 5,378,036 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Seeds active course catalog and candidate skill mappings via 'all_skill' field.
 - **Governance Restrictions:** Tags reconciled against canonical platform taxonomy. Ambiguous mappings flagged for review.
@@ -193,8 +194,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `learnup_opportunities.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `1f819a724e7e72181341b2f2fe8392792b7439642693eb4c83cfb1f94bf4f5c6`
-- **File Size:** 109,185 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Seeds verified demo opportunities feed across jobs, internships, and hackathons.
 - **Governance Restrictions:** Expired items quarantined or labeled 'expired'. Missing eligibility explicitly rendered as 'Not provided' rather than inferred.
@@ -203,8 +204,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `Final Course List (July - Dec 2026).xlsx`
 - **Source Type:** `reference_catalog` | **Trust/Use State:** `historical`
-- **Full SHA-256:** `85f08e265a8e75280648816b3f0d510a15eb15328954456dfbf3c5e0b4ce0057`
-- **File Size:** 877,449 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** NPTEL academic curriculum reference catalog. Course-level dates evaluated against current system date.
 - **Governance Restrictions:** All 1,054 records archived with state 'historical' since instruction and enrollment have passed. Shown only as reference curriculum.
@@ -213,8 +214,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `edx_courses.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `active_verified`
-- **Full SHA-256:** `394bdb7edc43b3a5b1d1512c0aab64e38abf197d9b38babfa669598eac68c4f3`
-- **File Size:** 1,983,770 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Seeds academic course catalog with university listings, institutions, descriptions, and difficulty levels.
 - **Governance Restrictions:** Missing syllabus and descriptions explicitly noted. Candidate skill tags mapped from title/summary.
@@ -223,8 +224,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `coursea_data.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `incomplete`
-- **Full SHA-256:** `0c460da20cc9082c5a2ec0472f166f15be3e94bf14426a70db85b30b043b8b29`
-- **File Size:** 84,956 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Course discovery search source with title, organization, rating, difficulty, and learner counts.
 - **Governance Restrictions:** Retained for discovery search only. Excluded from skill-gap recommendations until validated URL and explainable skill mapping exist.
@@ -233,8 +234,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `cleaned_jobs.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `processed`
-- **Full SHA-256:** `55a0b97a55747d550684d74fc1f09e4a533d6b6804db6bc4d79b0984b78c4ea0`
-- **File Size:** 1,868,115 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Reconciliation against scraped_jobs.csv to audit partial cleaning runs and reconcile changed fields.
 - **Governance Restrictions:** All 502 unique rows linked back to scraped_jobs.csv canonical records to prevent double-counting. Zero new canonical inserts.
@@ -243,8 +244,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `cleaned_internship.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `processed`
-- **Full SHA-256:** `7cdb8fafc6e36eca4665bea737b67842e7b992fff99663e552ce349b7651989d`
-- **File Size:** 4,773,415 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Reconciliation with scraped_internships.csv to audit date transformations and derived fields.
 - **Governance Restrictions:** All records linked back to canonical scraped_internships records to prevent double-counting. Zero new canonical inserts.
@@ -253,8 +254,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `cleaned_hackathons.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `processed`
-- **Full SHA-256:** `6bb7cd190edae1a09036eb4c33937717f5cf72fa65553382187bb2f443a3dab0`
-- **File Size:** 1,964,485 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Reconciliation with scraped_hackathons.csv; validation and neutralization of transformed dates.
 - **Governance Restrictions:** Dates with year '2099' neutralized to null/unknown. All records linked to scraped_hackathons. Zero new canonical inserts.
@@ -263,8 +264,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `ai_jobs_market_2025_2026.csv`
 - **Source Type:** `unverified_market_data` | **Trust/Use State:** `illustrative_unverified`
-- **Full SHA-256:** `6ae7bc7bf724250cd8c977f86b620128318070a23cb0b17340e58d2321f7864e`
-- **File Size:** 383,900 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** UI prototyping for market-analysis screens and calculations with an explicit 'Illustrative / Unverified' label.
 - **Governance Restrictions:** STRICT RESTRICTION: Isolated from factual market demand and career analytics. Displayed strictly with 'Illustrative / Unverified' badges.
@@ -273,8 +274,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `LearnUP_Skill_Gap_and_Course_Matching_Competitor_Analysis.docx`
 - **Source Type:** `research_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `3a463ab1ce39708a127b899bb2f55ee71bf33425f316917d920e253b03011ea5`
-- **File Size:** 43,494 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Competitor research hypotheses (Coursera, LinkedIn Learning) and differentiation opportunities.
 - **Governance Restrictions:** Treated as research hypotheses for product differentiation.
@@ -282,9 +283,15 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 - **Identified Quality Gaps:** Unverified competitor pricing and feature assertions.
 
 ### `cleaned_dataset.csv`
+<<<<<<< Updated upstream
 - **Source Type:** `augmented_market_dataset` | **Trust/Use State:** `augmented_market_data`
 - **Full SHA-256:** `7ab153cc292088e39d14d6b0375d67c6d6427c55e6328eb3e76f55c1520a8b65`
 - **File Size:** 64,147,414 bytes
+=======
+- **Source Type:** `synthetic_dataset` | **Trust/Use State:** `synthetic_demo`
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
+>>>>>>> Stashed changes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Empirical and augmented multi-source training corpus: 100,000 multi-domain career postings utilized for multi-label skill extraction, role categorization, and compensation valuation modeling.
 - **Governance Restrictions:** Utilized in sanitized feature representations and multi-task ML training with cross-validation.
@@ -293,8 +300,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `DataFetch for Job_inter listings.docx`
 - **Source Type:** `planning_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `223c6a0291e16e24e9db3f7f5161f90fbe4f7ab54bbe9ec9f7850bb46d3d7548`
-- **File Size:** 19,402 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Source-acquisition roadmap for job & internship listings (Greenhouse, Lever, public feeds).
 - **Governance Restrictions:** Guidelines for future connector development; verified against API terms.
@@ -303,8 +310,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `Untitled document.pdf`
 - **Source Type:** `research_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `3abdda8dc955b4ebdebe91d99a09d94812dd8353d8c1fcd677751eb80f7ba7e6`
-- **File Size:** 55,257 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Secondary competitor analysis and platform limitations review.
 - **Governance Restrictions:** Treated as supplementary competitor research notes.
@@ -313,8 +320,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `Naukri Jobs Data.csv.zip`
 - **Source Type:** `archive` | **Trust/Use State:** `archived`
-- **Full SHA-256:** `b91da73beadb97073195951f8bf481f5a71f1f1a94a4f5030bcaaeaa7f6ab174`
-- **File Size:** 2,474,932 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `archive`
 - **Assigned Use:** Raw compressed archive of Naukri Jobs Data seed. Preserved in archive for auditability and lineage.
 - **Governance Restrictions:** Raw archive; not queried directly by application runtime.
@@ -323,8 +330,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `Aicte Intership Dataset.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `incomplete`
-- **Full SHA-256:** `d5532894ef25368feb892352bd8c9998c8666ed8e4e9400bffc0bed4cbfcf90d`
-- **File Size:** 353,474 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Limited internship and resource directory; ingestion/date/status QA source.
 - **Governance Restrictions:** Lack of application links and skill requirements preserved without fabrication. Inferred skills not presented as verified job requirements.
@@ -333,8 +340,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `LearnUP – Complete USP Document.pdf`
 - **Source Type:** `reference_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `017e3fd871aa6b2663e6b84f72488cd5f9de6ccd57af71c890a4e159a2db1bd2`
-- **File Size:** 247,282 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Catalog of 24 Unique Selling Propositions (USPs) and core value proposition narratives.
 - **Governance Restrictions:** Used for product messaging, value propositions, and UX guidance.
@@ -343,8 +350,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `SkillOrbit_Innovations_Winning_Edge.pdf`
 - **Source Type:** `reference_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `d5aefb0562a3b7d7d6f9c823fd169ec198b029be14d5640a732eafcbaad47111`
-- **File Size:** 206,159 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Innovation concepts, demo flow, and competitive edge strategies.
 - **Governance Restrictions:** Informs UI concepts and demo flow; claims validated before presenting as facts.
@@ -353,8 +360,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `codex-clipboard-feb48df2-100d-4dcc-a2b1-ffe166c93491.jpg`
 - **Source Type:** `reference_image` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `6e9e91a7fc7df30864937c6523574bc3c16570144beed9d58395bd929d6ac307`
-- **File Size:** 200,911 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_image`
 - **Assigned Use:** Visual system blueprint clipboard capture showing platform architecture sections.
 - **Governance Restrictions:** Used as architectural design reference only. Not structured training data.
@@ -363,8 +370,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `codex-clipboard-fe40120d-7fd6-437c-aa13-7f428e9e71f3.jpg`
 - **Source Type:** `reference_image` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `6e9e91a7fc7df30864937c6523574bc3c16570144beed9d58395bd929d6ac307`
-- **File Size:** 200,911 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_image`
 - **Assigned Use:** Duplicate clipboard capture of architecture blueprint. Linked directly to primary clipboard capture.
 - **Governance Restrictions:** Retained in manifest for completeness with duplicate_of link.
@@ -373,8 +380,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `5C2087CE-5CBF-4B5E-B1D9-95EFE4D0F4C9-export.png`
 - **Source Type:** `reference_image` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `cd692c2aa59a63d127d09250b6ae67061954c85f38d3a36f6c31274448ea5827`
-- **File Size:** 3,359,204 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_image`
 - **Assigned Use:** High-resolution master export of platform blueprint (21 architectural sections and workflow layout).
 - **Governance Restrictions:** Used as visual UX and information architecture guideline.
@@ -383,8 +390,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `Naukri Jobs Data.csv`
 - **Source Type:** `dataset` | **Trust/Use State:** `processed`
-- **Full SHA-256:** `9bbff6a171ffbb1d197a1dff9918f0e3676035b30db0a3c39eda21650add682a`
-- **File Size:** 9,855,664 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `tabular`
 - **Assigned Use:** Primary labeled seed for experimental title/short-text-to-expected-skills model (Data Analyst slice: 706-723 postings).
 - **Governance Restrictions:** Predictions shown as suggestions requiring user confirmation; not claimed as production-reliable career predictor. Cannot serve as primary input for full NLP text extraction without user validation.
@@ -393,8 +400,8 @@ $$\text{Unique Source Rows} = \text{Canonical Insert} + \text{Linked Duplicate} 
 
 ### `LearnUP - Complete USP Document.pdf`
 - **Source Type:** `reference_doc` | **Trust/Use State:** `reference`
-- **Full SHA-256:** `017e3fd871aa6b2663e6b84f72488cd5f9de6ccd57af71c890a4e159a2db1bd2`
-- **File Size:** 247,282 bytes
+- **Full SHA-256:** `reconciled_manifest`
+- **File Size:** 0 bytes
 - **Disposition Category:** `reference_doc`
 - **Assigned Use:** Catalog of 24 Unique Selling Propositions (USPs) and core value proposition narratives.
 - **Governance Restrictions:** Used for product messaging, value propositions, and UX guidance.

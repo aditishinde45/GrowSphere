@@ -142,6 +142,15 @@ def get_student_dashboard(
     if profile and profile.target_role and student_profile_out:
         student_profile_out.target_role_title = profile.target_role.title
 
+    # Compute real-time market demand intelligence from raw Naukri data
+    from app.services.market_intelligence import get_student_market_demand_insights
+    target_role_name = profile.target_role.title if (profile and profile.target_role) else "Data Analyst"
+    real_time_market_demand = get_student_market_demand_insights(
+        db=db,
+        user_id=current_user.id,
+        target_role_title=target_role_name,
+    )
+
     return StudentDashboard(
         user=UserOut.model_validate(current_user),
         profile=student_profile_out,
@@ -154,6 +163,7 @@ def get_student_dashboard(
         upcoming_sessions=[BookingOut.model_validate(b) for b in upcoming_bookings],
         saved_opportunities=saved_ops,
         next_action=next_action,
+        real_time_market_demand=real_time_market_demand,
     )
 
 

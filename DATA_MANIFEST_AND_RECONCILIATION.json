@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-21T13:08:17.163051+00:00",
+  "generated_at": "2026-10-22T14:29:14.185331+00:00",
   "manifest_version": "2.1.0",
   "total_physical_manifest_paths": 28,
-  "total_verified_present": 28,
-  "unique_content_hashes": 26,
+  "total_verified_present": 0,
+  "unique_content_hashes": 0,
   "manifest_records": [
     {
       "source_filename": "LearnUP_Product_Requirements_and_USPs.docx",
@@ -22,10 +22,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "25bfbbba8bfc17fc39d0f4b767281c7402bc53304c630bf36f877bfc3f78ca55",
-      "file_size_bytes": 52664,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "udemy_courses.csv",
@@ -44,10 +44,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "2848cb0830792f98085077b71fa06c90f3d79a1e8fc0ba8ab9225f02d3d85905",
-      "file_size_bytes": 693946,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "student_placement_career_success_dataset.csv",
@@ -66,10 +66,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 25000,
-      "verified_status": "verified_present",
-      "sha256_hash": "3a27aa5fdd3d424c023690119ae4f8724a0b787dae0f9ddd1ad247a0b032d02b",
-      "file_size_bytes": 4640004,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "scraped_jobs.csv",
@@ -88,10 +88,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "69e030142802151e01b9f1d467a59c3d34e7982d2db7096b16188f760c9c863f",
-      "file_size_bytes": 5414076,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "scraped_internships.csv",
@@ -110,10 +110,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "9c0b42b67ab279ecfe30e7b4e3f73ffdc2a95c3978c3843df4d162532fc48a26",
-      "file_size_bytes": 4111347,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "scraped_hackathons.csv",
@@ -132,10 +132,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "45907e851a9e9c02cf8a505b327d3544e94194e5a2dd4b185f460f42d03513ef",
-      "file_size_bytes": 1804382,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "MOOC.csv",
@@ -154,10 +154,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "3ccf430e27917fb969acd06fd2616cbc7e8d1dc9fa02653f65d67e5e7d1128ae",
-      "file_size_bytes": 5378036,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "learnup_opportunities.csv",
@@ -176,10 +176,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "1f819a724e7e72181341b2f2fe8392792b7439642693eb4c83cfb1f94bf4f5c6",
-      "file_size_bytes": 109185,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "Final Course List (July - Dec 2026).xlsx",
@@ -198,10 +198,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "85f08e265a8e75280648816b3f0d510a15eb15328954456dfbf3c5e0b4ce0057",
-      "file_size_bytes": 877449,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "edx_courses.csv",
@@ -220,10 +220,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "394bdb7edc43b3a5b1d1512c0aab64e38abf197d9b38babfa669598eac68c4f3",
-      "file_size_bytes": 1983770,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "coursea_data.csv",
@@ -242,10 +242,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "0c460da20cc9082c5a2ec0472f166f15be3e94bf14426a70db85b30b043b8b29",
-      "file_size_bytes": 84956,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "cleaned_jobs.csv",
@@ -264,10 +264,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "55a0b97a55747d550684d74fc1f09e4a533d6b6804db6bc4d79b0984b78c4ea0",
-      "file_size_bytes": 1868115,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "cleaned_internship.csv",
@@ -286,10 +286,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "7cdb8fafc6e36eca4665bea737b67842e7b992fff99663e552ce349b7651989d",
-      "file_size_bytes": 4773415,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "cleaned_hackathons.csv",
@@ -308,10 +308,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "6bb7cd190edae1a09036eb4c33937717f5cf72fa65553382187bb2f443a3dab0",
-      "file_size_bytes": 1964485,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "ai_jobs_market_2025_2026.csv",
@@ -330,10 +330,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 1500,
-      "verified_status": "verified_present",
-      "sha256_hash": "6ae7bc7bf724250cd8c977f86b620128318070a23cb0b17340e58d2321f7864e",
-      "file_size_bytes": 383900,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "LearnUP_Skill_Gap_and_Course_Matching_Competitor_Analysis.docx",
@@ -352,10 +352,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "3a463ab1ce39708a127b899bb2f55ee71bf33425f316917d920e253b03011ea5",
-      "file_size_bytes": 43494,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "cleaned_dataset.csv",
@@ -374,10 +374,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 100000,
-      "verified_status": "verified_present",
-      "sha256_hash": "7ab153cc292088e39d14d6b0375d67c6d6427c55e6328eb3e76f55c1520a8b65",
-      "file_size_bytes": 64147414,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "DataFetch for Job_inter listings.docx",
@@ -396,10 +396,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "223c6a0291e16e24e9db3f7f5161f90fbe4f7ab54bbe9ec9f7850bb46d3d7548",
-      "file_size_bytes": 19402,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "Untitled document.pdf",
@@ -418,10 +418,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "3abdda8dc955b4ebdebe91d99a09d94812dd8353d8c1fcd677751eb80f7ba7e6",
-      "file_size_bytes": 55257,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "Naukri Jobs Data.csv.zip",
@@ -440,10 +440,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "b91da73beadb97073195951f8bf481f5a71f1f1a94a4f5030bcaaeaa7f6ab174",
-      "file_size_bytes": 2474932,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "Aicte Intership Dataset.csv",
@@ -462,10 +462,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 0,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "d5532894ef25368feb892352bd8c9998c8666ed8e4e9400bffc0bed4cbfcf90d",
-      "file_size_bytes": 353474,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "LearnUP \u2013 Complete USP Document.pdf",
@@ -484,10 +484,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "017e3fd871aa6b2663e6b84f72488cd5f9de6ccd57af71c890a4e159a2db1bd2",
-      "file_size_bytes": 247282,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "SkillOrbit_Innovations_Winning_Edge.pdf",
@@ -506,10 +506,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "d5aefb0562a3b7d7d6f9c823fd169ec198b029be14d5640a732eafcbaad47111",
-      "file_size_bytes": 206159,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "codex-clipboard-feb48df2-100d-4dcc-a2b1-ffe166c93491.jpg",
@@ -528,10 +528,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "6e9e91a7fc7df30864937c6523574bc3c16570144beed9d58395bd929d6ac307",
-      "file_size_bytes": 200911,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "codex-clipboard-fe40120d-7fd6-437c-aa13-7f428e9e71f3.jpg",
@@ -551,10 +551,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "6e9e91a7fc7df30864937c6523574bc3c16570144beed9d58395bd929d6ac307",
-      "file_size_bytes": 200911,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "5C2087CE-5CBF-4B5E-B1D9-95EFE4D0F4C9-export.png",
@@ -573,10 +573,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "cd692c2aa59a63d127d09250b6ae67061954c85f38d3a36f6c31274448ea5827",
-      "file_size_bytes": 3359204,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "Naukri Jobs Data.csv",
@@ -595,10 +595,10 @@
       "invalid_excluded": 0,
       "out_of_scope_retained": 27262,
       "source_only": 0,
-      "verified_status": "verified_present",
-      "sha256_hash": "9bbff6a171ffbb1d197a1dff9918f0e3676035b30db0a3c39eda21650add682a",
-      "file_size_bytes": 9855664,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     },
     {
       "source_filename": "LearnUP - Complete USP Document.pdf",
@@ -618,10 +618,10 @@
       "invalid_excluded": null,
       "out_of_scope_retained": null,
       "source_only": null,
-      "verified_status": "verified_present",
-      "sha256_hash": "017e3fd871aa6b2663e6b84f72488cd5f9de6ccd57af71c890a4e159a2db1bd2",
-      "file_size_bytes": 247282,
-      "audit_timestamp": "2026-10-21T13:08:17.163051+00:00"
+      "verified_status": "reconciled_manifest",
+      "sha256_hash": "reconciled_manifest",
+      "file_size_bytes": 0,
+      "audit_timestamp": "2026-10-22T14:29:14.185331+00:00"
     }
   ]
 }

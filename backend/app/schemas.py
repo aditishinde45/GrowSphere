@@ -462,6 +462,7 @@ class StudentDashboard(BaseModel):
     upcoming_sessions: List[BookingOut] = []
     saved_opportunities: List[dict] = []
     next_action: Optional[dict] = None
+    real_time_market_demand: Optional[dict] = None
 
 
 class EmployeeDashboard(BaseModel):
