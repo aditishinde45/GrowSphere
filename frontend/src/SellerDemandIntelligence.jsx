@@ -38,8 +38,7 @@ export default function SellerDemandIntelligence({ sellerCourses = [] }) {
       {/* Top Demand Intelligence Header */}
       <div className="glass-panel" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
         <div>
-          <span className="badge badge-verified" style={{ marginBottom: 6 }}>LEARNER DEMAND SIGNALS</span>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", margin: "2px 0" }}>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 4px 0" }}>
             Market Intelligence & Catalog Opportunities
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", margin: 0 }}>

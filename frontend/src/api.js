@@ -3,7 +3,8 @@
  * Connects to FastAPI backend with configurable environment-based URL.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const rawBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE = rawBase.endsWith("/api") ? rawBase : `${rawBase.replace(/\/+$/, "")}/api`;
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("growsphere_token");
@@ -45,6 +46,45 @@ export const register = (email, fullName, password, role) =>
     method: "POST",
     body: JSON.stringify({ email, full_name: fullName, password, role }),
   });
+
+// ─── Neon Services Integration (Postgres & Auth) ───
+export const getNeonServiceStatus = () => apiRequest("/auth/neon/status");
+
+export const syncNeonUser = (userData) =>
+  apiRequest("/auth/neon/sync", {
+    method: "POST",
+    body: JSON.stringify(userData),
+  });
+
+export const NEON_AUTH_URL =
+  import.meta.env.VITE_NEON_AUTH_BASE_URL ||
+  "https://ep-green-flower-azk4g2er.neonauth.c-3.ap-southeast-1.aws.neon.tech/neondb/auth";
+
+export const neonAuthSignIn = async (email, password) => {
+  const resp = await fetch(`${NEON_AUTH_URL}/sign-in/email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || "Neon Auth sign-in failed");
+  }
+  return await resp.json();
+};
+
+export const neonAuthSignUp = async (email, password, name) => {
+  const resp = await fetch(`${NEON_AUTH_URL}/sign-up/email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || "Neon Auth sign-up failed");
+  }
+  return await resp.json();
+};
 
 export const getMe = () => apiRequest("/auth/me");
 export const logout = () => apiRequest("/auth/logout", { method: "POST" });
@@ -116,6 +156,30 @@ export const addProjectEvidence = (skillId, projectTitle, projectUrl, proofText)
 export const getMarketEvidence = (params = "") =>
   apiRequest(`/skills/market-evidence${params ? `?${params}` : ""}`);
 export const getActiveRoadmap = () => apiRequest("/roadmap/active");
+export const listUserRoadmaps = () => apiRequest("/roadmap/");
+export const getRoadmapById = (roadmapId) => apiRequest(`/roadmap/${roadmapId}`);
+export const validateRoadmapDeadline = (data) =>
+  apiRequest("/roadmap/validate-deadline", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const generatePersonalizedRoadmap = (data) =>
+  apiRequest("/roadmap/generate-personalized", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const toggleRoadmapTask = (roadmapId, taskId, isCompleted) =>
+  apiRequest(`/roadmap/${roadmapId}/toggle-task`, {
+    method: "POST",
+    body: JSON.stringify({ task_id: taskId, is_completed: isCompleted }),
+  });
+export const regeneratePersonalizedRoadmap = (roadmapId, data) =>
+  apiRequest(`/roadmap/${roadmapId}/regenerate`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const deleteRoadmap = (roadmapId) =>
+  apiRequest(`/roadmap/${roadmapId}`, { method: "DELETE" });
 export const generateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
 export const regenerateRoadmap = () => apiRequest("/roadmap/generate", { method: "POST" });
 
@@ -159,17 +223,44 @@ export const requestSellerPayout = (amount, payoutDetails) =>
     body: JSON.stringify({ amount, payout_details: payoutDetails }),
   });
 
-// ─── AI Mock Interview Studio ───
-export const startMockInterview = (targetRole, interviewType) =>
-  apiRequest("/mock-interviews/start", {
+// ─── AI Mock Interview Studio (Voice & Rubric) ───
+export const getVoiceInterviewPlan = (data) =>
+  apiRequest("/mock-interviews/plan", {
     method: "POST",
-    body: JSON.stringify({ target_role: targetRole, interview_type: interviewType }),
+    body: JSON.stringify(data),
   });
+
+export const startMockInterview = (targetRoleOrPayload, interviewType) => {
+  const payload = typeof targetRoleOrPayload === "object"
+    ? targetRoleOrPayload
+    : { target_role: targetRoleOrPayload, interview_type: interviewType || "technical" };
+  return apiRequest("/mock-interviews/start", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+};
+
+export const sendVoiceTurn = (sessionId, data) =>
+  apiRequest(`/mock-interviews/${sessionId}/turn`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const finalizeVoiceInterview = (sessionId, data) =>
+  apiRequest(`/mock-interviews/${sessionId}/finalize`, {
+    method: "POST",
+    body: JSON.stringify(data || {}),
+  });
+
+export const getMockInterviewSession = (sessionId) =>
+  apiRequest(`/mock-interviews/${sessionId}`);
+
 export const submitMockInterviewAnswer = (sessionId, questionId, learnerAnswer) =>
   apiRequest(`/mock-interviews/${sessionId}/answer`, {
     method: "POST",
     body: JSON.stringify({ question_id: questionId, learner_answer: learnerAnswer }),
   });
+
 export const getMockInterviewHistory = () => apiRequest("/mock-interviews/my-history");
 
 // ─── Learning Materials (Flashcards & Notes) ───

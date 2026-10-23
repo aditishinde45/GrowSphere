@@ -16,6 +16,7 @@ export default function AuthModal({
   const [mode, setMode] = useState(initialMode); // signin | register | forgot | verify
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [useNeonAuth, setUseNeonAuth] = useState(false);
 
   // Sign In Form
   const [loginEmail, setLoginEmail] = useState("");
@@ -53,11 +54,26 @@ export default function AuthModal({
     setError(null);
     setLoading(true);
     try {
-      const res = await api.login(loginEmail.trim(), loginPassword);
-      localStorage.setItem("growsphere_token", res.access_token);
-      showNotification(`Welcome back, ${res.user.full_name}!`);
-      onAuthSuccess(res.user, res.access_token);
-      onClose();
+      if (useNeonAuth) {
+        // Authenticate directly with Neon Auth service
+        const neonRes = await api.neonAuthSignIn(loginEmail.trim(), loginPassword);
+        // Sync user into GrowSphere database
+        const synced = await api.syncNeonUser({
+          email: neonRes.user?.email || loginEmail.trim(),
+          name: neonRes.user?.name || "Neon Candidate",
+          neon_token: neonRes.token,
+        });
+        localStorage.setItem("growsphere_token", synced.access_token);
+        showNotification(`Signed in via Neon Auth! Welcome, ${synced.user.full_name}!`);
+        onAuthSuccess(synced.user, synced.access_token);
+        onClose();
+      } else {
+        const res = await api.login(loginEmail.trim(), loginPassword);
+        localStorage.setItem("growsphere_token", res.access_token);
+        showNotification(`Welcome back, ${res.user.full_name}!`);
+        onAuthSuccess(res.user, res.access_token);
+        onClose();
+      }
     } catch (err) {
       setError(err.message || "Failed to sign in. Please verify your credentials.");
     } finally {
@@ -82,6 +98,42 @@ export default function AuthModal({
 
     setLoading(true);
     try {
+      if (useNeonAuth) {
+        const neonRes = await api.neonAuthSignUp(regEmail.trim(), regPassword, regFullName.trim());
+        const synced = await api.syncNeonUser({
+          email: neonRes.user?.email || regEmail.trim(),
+          name: neonRes.user?.name || regFullName.trim(),
+          neon_token: neonRes.token,
+          role: regRole,
+        });
+        localStorage.setItem("growsphere_token", synced.access_token);
+
+        try {
+          if (regRole === "student") {
+            await api.submitOnboarding({
+              education: education || "Bachelor's Degree",
+              college: college || "University",
+              target_role_id: 1,
+            });
+          } else if (regRole === "employee") {
+            await api.submitOnboarding({
+              current_role: currentRole || "Associate Analyst",
+              current_company: currentCompany || "TechCorp",
+              years_experience: Number(yearsExperience) || 2,
+              goal_mode: goalMode,
+              target_role_id: 1,
+            });
+          }
+        } catch (onboardingErr) {
+          console.warn("Onboarding non-blocking note:", onboardingErr);
+        }
+
+        showNotification(`Account created via Neon Auth! Welcome to GrowSphere, ${synced.user.full_name}.`);
+        onAuthSuccess(synced.user, synced.access_token);
+        onClose();
+        return;
+      }
+
       const res = await api.register(regEmail.trim(), regFullName.trim(), regPassword, regRole);
       localStorage.setItem("growsphere_token", res.access_token);
 
@@ -293,6 +345,76 @@ export default function AuthModal({
             Verify Email
           </button>
         </div>
+
+        {/* Neon Auth Toggle / Badge */}
+        {(mode === "signin" || mode === "register") && (
+          <div
+            onClick={() => setUseNeonAuth(!useNeonAuth)}
+            role="button"
+            tabIndex={0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px 14px",
+              borderRadius: 8,
+              background: useNeonAuth ? "rgba(0, 230, 153, 0.12)" : "var(--badge-bg)",
+              border: useNeonAuth ? "1px solid #00e699" : "1px solid var(--border-subtle)",
+              marginBottom: 16,
+              cursor: "pointer",
+              userSelect: "none",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 6,
+                  background: useNeonAuth ? "#00e699" : "var(--border-subtle)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: useNeonAuth ? "#000" : "var(--text-muted)",
+                }}
+              >
+                <Sparkles size={14} />
+              </div>
+              <div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  Neon Serverless Auth
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                  {useNeonAuth ? "Using Neon Cloud Auth + Serverless Postgres" : "Toggle on to authenticate directly via Neon"}
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                width: 38,
+                height: 20,
+                borderRadius: 10,
+                background: useNeonAuth ? "#00e699" : "var(--border-subtle)",
+                position: "relative",
+                transition: "background 0.2s ease",
+              }}
+            >
+              <div
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  background: "#fff",
+                  position: "absolute",
+                  top: 3,
+                  left: useNeonAuth ? 21 : 3,
+                  transition: "left 0.2s ease",
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (

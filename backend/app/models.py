@@ -394,11 +394,22 @@ class Roadmap(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    career_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=False)
+    career_role_id = Column(Integer, ForeignKey("career_roles.id"), nullable=True)
+    skill_name = Column(String(255), nullable=True, index=True)
+    current_level = Column(String(50), default="Beginner")
+    target_level = Column(String(50), default="Job-Ready / Advanced")
+    desired_deadline = Column(String(100), nullable=True)
+    estimated_duration = Column(String(100), nullable=True)
+    hours_per_week = Column(Integer, default=10)
+    status = Column(String(50), default="In Progress")
+    is_accelerated = Column(Boolean, default=False)
+    deadline_validation = Column(JSON, nullable=True)
+    learning_plan = Column(JSON, nullable=True)
+    completed_tasks = Column(JSON, default=list)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    overall_progress = Column(Float, default=0.0)  # 0.0-1.0
+    overall_progress = Column(Float, default=0.0)  # 0.0-100.0 or 0.0-1.0
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -707,6 +718,11 @@ class MockInterviewSession(Base):
     consent_given = Column(Boolean, default=True)
     questions = Column(JSON, nullable=True)
     responses = Column(JSON, nullable=True)
+    interview_mode = Column(String(50), default="voice")  # voice, text_rubric
+    duration_minutes = Column(Integer, default=15)
+    resume_context = Column(Text, nullable=True)
+    transcript = Column(JSON, nullable=True)  # List of {speaker, text, timestamp, is_followup, etc.}
+    analytics = Column(JSON, nullable=True)  # 5-pillar scores, fluency, metrics
     feedback_report = Column(JSON, nullable=True)
     overall_score = Column(Float, nullable=True)  # 0.0-1.0
     created_at = Column(DateTime, default=utcnow)
