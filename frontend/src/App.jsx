@@ -10,6 +10,7 @@ import SkillDemandRadar from "./SkillDemandRadar";
 import SellerDemandIntelligence from "./SellerDemandIntelligence";
 import { MentorIntelligenceView, LearnerProfilePreviewModal } from "./MentorIntelligence";
 import RoadmapHub from "./RoadmapHub";
+import OpportunityRadar from "./OpportunityRadar";
 
 import {
   EditStudentProfileModal,
@@ -1810,86 +1811,16 @@ export default function App() {
 
             {/* TAB 5: OPPORTUNITIES & APPLICATION TRACKER */}
             {studentTab === "jobs" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Application Tracking Kanban-style List */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <CheckSquare size={18} color="var(--accent-emerald)" /> Active Application Tracker ({savedJobs.length} Opportunities)
-                  </h3>
-
-                  {savedJobs.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No saved opportunities yet. Save matching roles below to track your applications!</p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {savedJobs.map((item) => (
-                        <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
-                            {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
-                          </div>
-
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <select
-                              value={item.status}
-                              onChange={(e) => handleUpdateAppStatus(item.id, e.target.value)}
-                              className="input-field"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem", width: "auto" }}
-                            >
-                              <option value="saved">Saved</option>
-                              <option value="applied">Applied</option>
-                              <option value="interviewing">Interviewing</option>
-                              <option value="offered">Offered</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                            <span className="badge badge-verified">{item.status.toUpperCase()}</span>
-                            <button
-                              onClick={() => handleDeleteSavedOpportunity(item.id)}
-                              className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
-                              title="Remove opportunity from tracking"
-                            >
-                              ✕ Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Matches Radar */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <Briefcase size={18} color="var(--primary)" /> Transparent Opportunity Matches
-                  </h3>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {jobMatches.map((jm, i) => (
-                      <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
-                          </div>
-                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
-                        </div>
-
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 10 }}>
-                          {jm.explanation}
-                        </div>
-
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Posted · {jm.job.location || "India"}</span>
-                          <button onClick={() => handleSaveJob(jm.job.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
-                            Save Opportunity
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <OpportunityRadar
+                user={user}
+                studentProfile={studentProfile}
+                employeeProfile={employeeProfile}
+                onNavigateToRoadmap={() => setStudentTab("roadmap")}
+                onNavigateToResumeBuilder={() => {
+                  setStudentTab("resume");
+                  setResumeMode("builder");
+                }}
+              />
             )}
 
             {/* TAB 6: COURSES & MENTORS MARKETPLACE */}
@@ -2746,86 +2677,16 @@ export default function App() {
 
             {/* ════════ SUBTAB 6: OPPORTUNITIES RADAR & TRACKER ════════ */}
             {employeeTab === "jobs" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Active Application Tracker */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <CheckSquare size={18} color="var(--accent-emerald)" /> Professional Application Tracker ({savedJobs.length} Opportunities)
-                  </h3>
-
-                  {savedJobs.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No saved opportunities yet. Save matching roles below to track your applications!</p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {savedJobs.map((item) => (
-                        <div key={item.id} style={{ padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem" }}>{item.job_posting?.title || `Posting #${item.job_posting_id}`}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.job_posting?.company} · {item.job_posting?.location}</div>
-                            {item.notes && <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>Note: {item.notes}</div>}
-                          </div>
-
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <select
-                              value={item.status}
-                              onChange={(e) => handleUpdateAppStatus(item.id, e.target.value)}
-                              className="input-field"
-                              style={{ padding: "6px 10px", fontSize: "0.8rem", width: "auto" }}
-                            >
-                              <option value="saved">Saved</option>
-                              <option value="applied">Applied</option>
-                              <option value="interviewing">Interviewing</option>
-                              <option value="offered">Offered</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                            <span className="badge badge-verified">{item.status.toUpperCase()}</span>
-                            <button
-                              onClick={() => handleDeleteSavedOpportunity(item.id)}
-                              className="btn btn-secondary"
-                              style={{ padding: "6px 10px", fontSize: "0.75rem", color: "var(--accent-danger-text)" }}
-                              title="Remove opportunity from tracking"
-                            >
-                              ✕ Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Matches Radar */}
-                <div className="glass-panel" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                    <Briefcase size={18} color="var(--primary)" /> Lateral & Leadership Opportunity Matches
-                  </h3>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {jobMatches.map((jm, i) => (
-                      <div key={i} style={{ padding: 18, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text-primary)" }}>{jm.job.title}</div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{jm.job.company} · {jm.job.location}</div>
-                          </div>
-                          <span className="badge badge-verified">{Math.round(jm.match_score * 100)}% Match</span>
-                        </div>
-
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 10 }}>
-                          {jm.explanation}
-                        </div>
-
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Posted · {jm.job.location || "India"}</span>
-                          <button onClick={() => handleSaveJob(jm.job.id)} className="btn btn-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px" }}>
-                            Save Opportunity
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <OpportunityRadar
+                user={user}
+                studentProfile={studentProfile}
+                employeeProfile={employeeProfile}
+                onNavigateToRoadmap={() => setEmployeeTab("roadmap")}
+                onNavigateToResumeBuilder={() => {
+                  setEmployeeTab("resume");
+                  setResumeMode("builder");
+                }}
+              />
             )}
 
             {/* ════════ SUBTAB 7: EXECUTIVE MENTORS & ADVISORY ════════ */}

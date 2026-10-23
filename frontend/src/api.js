@@ -309,9 +309,30 @@ export const createCourseReview = (courseId, rating, reviewText) =>
   });
 export const getCourseReviews = (courseId) => apiRequest(`/courses/${courseId}/reviews`);
 
-// ─── Jobs, Internships & Saved Opportunities ───
+// ─── Jobs, Internships & Saved Opportunities (Opportunity Radar) ───
 export const getJobs = (params = "") => apiRequest(`/jobs/${params}`);
 export const getJobMatches = () => apiRequest("/jobs/matches");
+export const getOpportunityRadar = (params = {}) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") query.append(k, v);
+  });
+  const qs = query.toString();
+  return apiRequest(`/jobs/radar${qs ? `?${qs}` : ""}`);
+};
+export const easyApplyOpportunity = (jobId, payload) =>
+  apiRequest(`/jobs/${jobId}/easy-apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+export const trackExternalOpportunity = (jobId, payload) =>
+  apiRequest(`/jobs/${jobId}/track-external`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+export const getOpportunityTrackingSummary = () => apiRequest("/jobs/tracking/summary");
 export const saveOpportunity = (jobPostingId, notes) =>
   apiRequest(`/jobs/${jobPostingId}/save`, {
     method: "POST",
@@ -320,10 +341,17 @@ export const saveOpportunity = (jobPostingId, notes) =>
 export const getSavedOpportunities = () => apiRequest("/jobs/saved/my");
 export const deleteSavedOpportunity = (savedId) =>
   apiRequest(`/jobs/saved/${savedId}`, { method: "DELETE" });
-export const updateSavedApplicationStatus = (savedId, status, notes) =>
+export const updateSavedApplicationStatus = (savedId, status, notes, interviewDate, followUpDate, externalUrl) =>
   apiRequest(`/jobs/saved/${savedId}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status, notes }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      status,
+      notes,
+      interview_date: interviewDate,
+      follow_up_date: followUpDate,
+      external_tracking_url: externalUrl,
+    }),
   });
 
 // ─── Mentors, Availability, Bookings & Endorsements ───

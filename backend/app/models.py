@@ -794,8 +794,13 @@ class SavedOpportunity(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     job_id = Column(Integer, ForeignKey("job_postings.id"), nullable=False, index=True)
-    status = Column(String(50), default="saved")  # saved, applied, interviewing, offered, rejected
+    status = Column(String(50), default="saved")  # saved, applied, assessment, interview, offer, rejected, withdrawn
     notes = Column(Text, nullable=True)
+    application_data = Column(JSON, nullable=True)
+    resume_id = Column(Integer, ForeignKey("saved_resumes.id"), nullable=True)
+    interview_date = Column(DateTime, nullable=True)
+    follow_up_date = Column(DateTime, nullable=True)
+    external_tracking_url = Column(String(1000), nullable=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -805,6 +810,7 @@ class SavedOpportunity(Base):
 
     user = relationship("User")
     job = relationship("JobPosting")
+    resume = relationship("SavedResume")
 
 
 # ─── Moderation, Trust & Support ──────────────────────────────────────
