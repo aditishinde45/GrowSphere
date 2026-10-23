@@ -866,3 +866,21 @@ class EmailVerificationToken(Base):
     created_at = Column(DateTime, default=utcnow)
 
     user = relationship("User")
+
+
+# ─── ATS Resume Analysis ─────────────────────────────────────────────
+class ResumeAnalysis(Base):
+    __tablename__ = "resume_analyses"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    filename = Column(String(255), nullable=False)
+    target_role = Column(String(200), nullable=False)
+    resume_text = Column(Text, nullable=False)
+    ats_score = Column(Integer, nullable=False)
+    role_suitability = Column(Integer, nullable=False)
+    analysis_json = Column(JSON, nullable=False)  # Full structured analysis result
+    created_at = Column(DateTime, default=utcnow)
+
+    user = relationship("User")
+

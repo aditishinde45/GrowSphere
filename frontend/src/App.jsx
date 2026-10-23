@@ -3,6 +3,7 @@ import * as api from "./api";
 import LandingPage from "./LandingPage";
 import AuthModal from "./AuthModal";
 import ResumeBuilder from "./ResumeBuilder";
+import ATSResumeAnalyzer from "./ATSResumeAnalyzer";
 import MockInterviewStudio from "./MockInterviewStudio";
 import StudyNotesModal from "./StudyNotesModal";
 import SkillDemandRadar from "./SkillDemandRadar";
@@ -124,7 +125,7 @@ export default function App() {
 
   // AI Mock Interview Studio State
     // New Modular Feature States (PRD Sections 5.2, 5.4, 5.9, 5.10, 7.2, 8.3)
-  const [resumeMode, setResumeMode] = useState("builder"); // builder | scanner
+  const [resumeMode, setResumeMode] = useState("analyzer"); // analyzer | builder | scanner
   const [studyNotesTopic, setStudyNotesTopic] = useState(null);
   const [studyNotesMaterials, setStudyNotesMaterials] = useState(null);
   const [previewBooking, setPreviewBooking] = useState(null);
@@ -1302,7 +1303,7 @@ export default function App() {
                 <Shield size={16} /> 5-Tier Evidence & Skill Passport
               </button>
               <button className={`subtab-btn ${studentTab === "resume" ? "active" : ""}`} onClick={() => setStudentTab("resume")}>
-                <FileText size={16} /> Explainable ATS Resume Scanner
+                <FileText size={16} /> AI ATS Resume Analyzer & Studio
               </button>
               <button className={`subtab-btn ${studentTab === "mock_interview" ? "active" : ""}`} onClick={() => setStudentTab("mock_interview")}>
                 <Sparkles size={16} /> AI Mock Interview Studio
@@ -1623,7 +1624,14 @@ export default function App() {
             {studentTab === "resume" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {/* Mode Selector Toggle */}
-                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setResumeMode("analyzer")}
+                    className={`btn ${resumeMode === "analyzer" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> AI ATS Resume Analyzer & Role Fit
+                  </button>
                   <button
                     onClick={() => setResumeMode("builder")}
                     className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
@@ -1636,11 +1644,13 @@ export default function App() {
                     className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
                     style={{ fontSize: "0.82rem", padding: "6px 16px" }}
                   >
-                    <Sparkles size={15} /> ATS Resume Scanner & Parser
+                    <CheckSquare size={15} /> Quick Skill Extractor & Profile Sync
                   </button>
                 </div>
 
-                {resumeMode === "builder" ? (
+                {resumeMode === "analyzer" ? (
+                  <ATSResumeAnalyzer user={user} />
+                ) : resumeMode === "builder" ? (
                   <ResumeBuilder
                     user={user}
                     studentProfile={studentProfile}
@@ -2560,7 +2570,14 @@ export default function App() {
             {employeeTab === "resume" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {/* Mode Selector Toggle */}
-                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", gap: 8, padding: 4, background: "var(--badge-bg)", borderRadius: 10, width: "fit-content", border: "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => setResumeMode("analyzer")}
+                    className={`btn ${resumeMode === "analyzer" ? "btn-primary" : "btn-secondary"}`}
+                    style={{ fontSize: "0.82rem", padding: "6px 16px" }}
+                  >
+                    <Sparkles size={15} /> AI ATS Resume Analyzer & Role Fit
+                  </button>
                   <button
                     onClick={() => setResumeMode("builder")}
                     className={`btn ${resumeMode === "builder" ? "btn-primary" : "btn-secondary"}`}
@@ -2573,11 +2590,13 @@ export default function App() {
                     className={`btn ${resumeMode === "scanner" ? "btn-primary" : "btn-secondary"}`}
                     style={{ fontSize: "0.82rem", padding: "6px 16px" }}
                   >
-                    <Sparkles size={15} /> ATS Scanner & Experience Parser
+                    <CheckSquare size={15} /> Quick Experience Parser
                   </button>
                 </div>
 
-                {resumeMode === "builder" ? (
+                {resumeMode === "analyzer" ? (
+                  <ATSResumeAnalyzer user={user} />
+                ) : resumeMode === "builder" ? (
                   <ResumeBuilder
                     user={user}
                     studentProfile={studentProfile}

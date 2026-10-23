@@ -424,3 +424,17 @@ export const getDataRegisterSummary = () => apiRequest("/data-register/summary")
 // ─── Health ───
 export const checkDbHealth = () => apiRequest("/health/db");
 
+// ─── ATS Resume Analyzer ───
+export const analyzeResumeFile = (file, targetRole) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("target_role", targetRole);
+  return apiRequest("/resume-analyzer/analyze", {
+    method: "POST",
+    body: formData,
+  });
+};
+export const getResumeAnalysisHistory = () => apiRequest("/resume-analyzer/history");
+export const getResumeAnalysisReport = (id) => apiRequest(`/resume-analyzer/report/${id}`);
+export const getSupportedRoles = () => apiRequest("/resume-analyzer/roles");
+
